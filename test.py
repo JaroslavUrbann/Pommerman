@@ -3,6 +3,7 @@ from IPython import display
 import pommerman
 from pommerman import agents
 from test_agent import TestAgent
+from docker_agent import DockerAgent
 # import matplotlib.pyplot as plt
 
 
@@ -18,9 +19,12 @@ def main():
         agents.SimpleAgent(),
         agents.SimpleAgent(),
         agents.SimpleAgent(),
-        # TestAgent(),
-        # TestAgent(),
+        # DockerAgent("multiagentlearning/hakozakijunctions", 80)
         TestAgent(),
+        # TestAgent(),
+        # TestAgent(),
+        # agents.RandomAgent(),
+        # agents.RandomAgent(),
         # agents.PlayerAgent(agent_control="arrows")
         # agents.DockerAgent("pommerman/simple-agent", port=12345),
     ]
@@ -34,12 +38,12 @@ def main():
         done = False
         while not done:
             i += 1
-            # env.render()
+            env.render()
             actions = env.act(state)
             state, reward, done, info = env.step(actions)
             # print(state)
-            if i == 300:
-                break
+            # if i == 300:
+            #     break
         print('Episode {} finished'.format(i_episode))
     env.close()
 
