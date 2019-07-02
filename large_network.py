@@ -42,9 +42,9 @@ class LargeNetwork:
         fc1 = tf.keras.layers.Dense(4096, activation='relu')(flat)
         fc2 = tf.keras.layers.Dense(1024, activation='relu')(fc1)
         fc3 = tf.keras.layers.Dense(512, activation='relu')(fc2)
-        fc1 = tf.keras.layers.Dense(128, activation='relu')(flat)
-        fc1 = tf.keras.layers.Dense(32, activation='relu')(flat)
-        out = tf.keras.layers.Dense(self.n_classes, activation='softmax')(fc3)
+        fc4 = tf.keras.layers.Dense(128, activation='relu')(fc3)
+        fc5 = tf.keras.layers.Dense(32, activation='relu')(fc4)
+        out = tf.keras.layers.Dense(self.n_classes, activation='softmax')(fc5)
 
         model = tf.keras.models.Model(inputs=[x1_map, x2_map, x1_player, x2_player], outputs=out)
         model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=self.lr))
@@ -52,12 +52,12 @@ class LargeNetwork:
         model.summary()
 
     def train_model(self):
-        x1_map = np.ones(shape=(64, 11, 11, self.n_map_features))
-        x2_map = np.ones(shape=(64, 11, 11, self.n_map_features))
-        x1_player = np.ones(shape=(64, 11, 11, self.n_player_features))
-        x2_player = np.ones(shape=(64, 11, 11, self.n_player_features))
-        y = np.ones(shape=(64, self.n_classes))
-        self.model.fit([x1_map, x2_map, x1_player, x2_player], y, epochs=2)
+        x1_map = np.ones(shape=(512, 11, 11, self.n_map_features))
+        x2_map = np.ones(shape=(512, 11, 11, self.n_map_features))
+        x1_player = np.ones(shape=(512, 11, 11, self.n_player_features))
+        x2_player = np.ones(shape=(512, 11, 11, self.n_player_features))
+        y = np.ones(shape=(512, self.n_classes))
+        self.model.fit([x1_map, x2_map, x1_player, x2_player], y, epochs=10)
 
     def test_model(self):
         x1_map = np.random.rand(1, 11, 11, self.n_map_features).astype("float32")
