@@ -8,6 +8,8 @@ import docker
 from pommerman.agents import BaseAgent
 from pommerman import utility
 from pommerman import characters
+import pretraining_database
+from feature_engineer import FeatureEngineer
 
 
 class DockerAgent(BaseAgent):
@@ -16,11 +18,15 @@ class DockerAgent(BaseAgent):
     def __init__(self,
                  docker_image,
                  port,
+                 agent_id,
                  server='http://localhost',
                  character=characters.Bomber,
                  docker_client=None,
                  env_vars=None):
         super(DockerAgent, self).__init__(character)
+
+        self.feature_engineer = FeatureEngineer()
+        self.agent_id = agent_id
 
         self._docker_image = docker_image
         self._docker_client = docker_client
@@ -130,9 +136,9 @@ class DockerAgent(BaseAgent):
                 timeout=0.15,
                 json={
                     "obs":
-                    obs_serialized,
+                        obs_serialized,
                     "action_space":
-                    json.dumps(action_space, cls=utility.PommermanJSONEncoder)
+                        json.dumps(action_space, cls=utility.PommermanJSONEncoder)
                 })
             action = req.json()['action']
         except requests.exceptions.Timeout as e:
@@ -143,9 +149,16 @@ class DockerAgent(BaseAgent):
                 return [0] * num_actions
             else:
                 return 0
+
+        if self.agent_id == 1 or self.agent_id == 2:
+            self.feature_engineer.update_features(obs)
+            map, player = self.feature_engineer.get_features()
+            pretraining_database.add_data(map, player, action, self.agent_id)
+
         return action
 
     def episode_end(self, reward):
+        self.feature_engineer = FeatureEngineer()
         request_url = "http://localhost:{}/episode_end".format(self._port)
         try:
             req = requests.post(
@@ -163,7 +176,7 @@ class DockerAgent(BaseAgent):
             req = requests.post(
                 request_url,
                 timeout=0.5,
-                json={ })
+                json={})
         except requests.exceptions.Timeout as e:
             print('Timeout in shutdown()!')
 

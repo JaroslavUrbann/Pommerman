@@ -1,26 +1,43 @@
 import numpy as np
-import random
+from constants import *
+import tensorflow as tf
 
-
-MAX_STEPS = 36000
 step_index = 0
-x_agent_1 = [{} for _ in range(MAX_STEPS)]
-x_agent_2 = [{} for _ in range(MAX_STEPS)]
-y_agent_1 = [0 for _ in range(MAX_STEPS)]
-y_agent_2 = [0 for _ in range(MAX_STEPS)]
+x1_map = np.zeros((DATABASE_SIZE, 11, 11, N_MAP_FEATURES), dtype="float32")
+x2_map = np.zeros((DATABASE_SIZE, 11, 11, N_MAP_FEATURES), dtype="float32")
+x1_player = np.zeros((DATABASE_SIZE, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+x2_player = np.zeros((DATABASE_SIZE, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+
+_default_y = np.zeros(N_CLASSES, dtype="float32")
+_default_y[N_CLASSES - 1] = 1
+
+y1 = np.tile(_default_y, (DATABASE_SIZE, 1))
+y2 = np.tile(_default_y, (DATABASE_SIZE, 1))
 
 
 def reset_database():
-    global x_agent_1, x_agent_2, y_agent_1, y_agent_2, step_index
+    global x1_map, x2_map, x1_player, x2_player, y1, y2, step_index
     step_index = 0
-    x_agent_1 = [{} for _ in range(MAX_STEPS)]
-    x_agent_2 = [{} for _ in range(MAX_STEPS)]
-    y_agent_1 = [0 for _ in range(MAX_STEPS)]
-    y_agent_2 = [0 for _ in range(MAX_STEPS)]
+    x1_map = np.zeros((DATABASE_SIZE, 11, 11, N_MAP_FEATURES), dtype="float32")
+    x2_map = np.zeros((DATABASE_SIZE, 11, 11, N_MAP_FEATURES), dtype="float32")
+    x1_player = np.zeros((DATABASE_SIZE, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+    x2_player = np.zeros((DATABASE_SIZE, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+
+    _default_y = np.zeros(N_CLASSES, dtype="float32")
+    _default_y[N_CLASSES - 1] = 1
+
+    y1 = np.tile(_default_y, (DATABASE_SIZE, 1))
+    y2 = np.tile(_default_y, (DATABASE_SIZE, 1))
 
 
-def shuffle_database():
-    global x_agent_1, x_agent_2, y_agent_1, y_agent_2
-    c = list(zip(x_agent_1, x_agent_2, y_agent_1, y_agent_2))
-    random.shuffle(c)
-    x_agent_1, x_agent_2, y_agent_1, y_agent_2 = zip(*c)
+def add_data(map, player, action, id):
+    global x1_map, x2_map, x1_player, x2_player, y1, y2, step_index
+    if step_index < DATABASE_SIZE:
+        if id == 1:
+            x1_map[step_index] = map
+            x1_player[step_index] = player
+            y1[step_index] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)
+        if id == 2:
+            x2_map[step_index] = map
+            x2_player[step_index] = player
+            y2[step_index] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)

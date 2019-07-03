@@ -1,18 +1,6 @@
 import numpy as np
 import time
-
-BOARD_SIZE = (11, 11)
-WOOD = 2
-STONE = 1
-AMMO_POWERUP = 6
-RANGE_POWERUP = 7
-KICK_POWERUP = 8
-FOG = 5
-TEAMMATE = "teammate"
-ENEMIES = "enemies"
-AGENT = "agent"
-PLAYER_DECAY = 0.8
-BOMB = 3
+from constants import *
 
 
 class FeatureEngineer:
@@ -34,6 +22,9 @@ class FeatureEngineer:
     _flame_map = np.zeros(BOARD_SIZE)
 
     _status_map = np.zeros(BOARD_SIZE)
+
+    _map_features = np.zeros((BOARD_SIZE[0], BOARD_SIZE[1], N_MAP_FEATURES))
+    _player_features = np.zeros((BOARD_SIZE[0], BOARD_SIZE[1], N_PLAYER_FEATURES))
 
     id = 0
     xd = 0
@@ -68,8 +59,7 @@ class FeatureEngineer:
         top_line[7] = int(observation["can_kick"])
         self._status_map[0] = top_line
 
-
-    # should be used for WOOD, STONE, POWERUPS, should be updated before flames
+    # should be used for WOOD, STONE, POWERUPS, has be updated before flames
     def _update_materials_map(self, observation, map, material):
 
         # gets boundries of agents' field of view
@@ -88,6 +78,7 @@ class FeatureEngineer:
         if material == WOOD:
             map[self._flame_map == 0.1] = 0
 
+    # has be updated before blast strength map
     def _update_bomb_map(self, observation):
         self._bomb_history_map = self._bomb_map.copy()
 
@@ -107,7 +98,8 @@ class FeatureEngineer:
         self._bomb_map[top:bottom, left:right] = filtered_fov
 
         # updates blast strength
-        self._hidden_blast_strength_map[top:bottom, left:right] = observation["bomb_blast_strength"][top:bottom, left:right]
+        self._hidden_blast_strength_map[top:bottom, left:right] = observation["bomb_blast_strength"][top:bottom,
+                                                                  left:right]
 
     # has to be updated before blast strength map because it needs to work with blast strength map at T-1
     def _update_flame_map(self, observation):
@@ -121,12 +113,11 @@ class FeatureEngineer:
         fov = observation["flame_life"][top:bottom, left:right]
 
         # maps the squares in fov into 0.9, 0.3, 0.1 and 0
-        filtered_fov = np.where(fov > 0, 0.9 / 3**(3 - fov), 0)
+        filtered_fov = np.where(fov > 0, 0.9 / 3 ** (3 - fov), 0)
 
         # rewrites visible part of the map with updated mappings
         self._flame_map[top:bottom, left:right] = filtered_fov
 
-    # has to be updated only after bomb map
     def _update_blast_strength_map(self):
         # clear explosions that happened unexpectedly
         self._blast_strength_map = np.zeros(BOARD_SIZE)
@@ -137,7 +128,8 @@ class FeatureEngineer:
         # (row, col, blast strength, life)
         bombs = []
         for i in range(len(col)):
-            bombs.append((row[i], col[i], int(self._hidden_blast_strength_map[row[i], col[i]] - 1), self._bomb_map[row[i], col[i]]))
+            bombs.append((row[i], col[i], int(self._hidden_blast_strength_map[row[i], col[i]] - 1),
+                          self._bomb_map[row[i], col[i]]))
         bombs.sort(key=lambda tup: tup[3], reverse=True)
 
         # creates expected blast radius & time for all bombs (including chaining explosions etc)
@@ -148,7 +140,8 @@ class FeatureEngineer:
 
             row, col = bombs[0][0], bombs[0][1] + 1
             a = 0
-            while col < BOARD_SIZE[1] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row, col - 1] != 1:
+            while col < BOARD_SIZE[1] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[
+                row, col - 1] != 1:
                 self._blast_strength_map[row, col] = bomb_life
                 if self._bomb_map[row, col] > 0:
                     bombs[np.where(np.all(bombs[0] == row, bombs[1] == col))[0]][3] = bomb_life
@@ -166,7 +159,8 @@ class FeatureEngineer:
 
             row, col = bombs[0][0] + 1, bombs[0][1]
             a = 0
-            while col < BOARD_SIZE[0] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row - 1, col] != 1:
+            while col < BOARD_SIZE[0] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[
+                row - 1, col] != 1:
                 self._blast_strength_map[row, col] = bomb_life
                 if self._bomb_map[row, col] > 0:
                     bombs[np.where(np.all(bombs[0] == row, bombs[1] == col))[0]][3] = bomb_life
@@ -197,25 +191,36 @@ class FeatureEngineer:
     def _update_fog_map(self, observation):
         self._fog_map = np.where(observation["board"] == FOG, 1, 0)
 
-    def make_features(self, observation):
-        tim = time.time()
-        self._update_players_map(observation, self._enemies_map, ENEMIES)
-        self._update_players_map(observation, self._teammate_map, TEAMMATE)
-        self._update_players_map(observation, self._agent_map, AGENT)
-        self._update_fog_map(observation)
+    def update_features(self, observation):
         self._update_materials_map(observation, self._wood_map, WOOD)
         self._update_materials_map(observation, self._stone_map, STONE)
         self._update_materials_map(observation, self._ammo_powerup_map, AMMO_POWERUP)
         self._update_materials_map(observation, self._range_powerup_map, RANGE_POWERUP)
         self._update_materials_map(observation, self._kick_powerup_map, KICK_POWERUP)
+        self._update_players_map(observation, self._enemies_map, ENEMIES)
+        self._update_players_map(observation, self._teammate_map, TEAMMATE)
+        self._update_players_map(observation, self._agent_map, AGENT)
+        self._update_fog_map(observation)
         self._update_bomb_map(observation)
         self._update_flame_map(observation)
         self._update_blast_strength_map()
         self._update_status_map(observation)
-        # print(self._status_map)
-        # print(observation["flame_life"])
-        self.xd += time.time() - tim
-        self.id += 1
-        print(self.xd/self.id)
-        # print("---------------------------------------------------------------")
-        # print(observation["bomb_blast_strength"])
+
+    def get_features(self):
+        self._map_features[:, :, 0] = self._wood_map
+        self._map_features[:, :, 0] = self._stone_map
+        self._map_features[:, :, 0] = self._ammo_powerup_map
+        self._map_features[:, :, 0] = self._range_powerup_map
+        self._map_features[:, :, 0] = self._kick_powerup_map
+        self._map_features[:, :, 0] = self._enemies_map
+        self._map_features[:, :, 0] = self._teammate_map
+        self._map_features[:, :, 0] = self._agent_map
+        self._map_features[:, :, 0] = self._fog_map
+        self._map_features[:, :, 0] = self._bomb_map
+        self._map_features[:, :, 0] = self._bomb_history_map
+        self._map_features[:, :, 0] = self._flame_map
+        self._map_features[:, :, 0] = self._blast_strength_map
+
+        self._player_features[:, :, 0] = self._status_map
+
+        return self._map_features, self._player_features

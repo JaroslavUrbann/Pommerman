@@ -2,9 +2,10 @@ from PIL import Image
 from IPython import display
 import pommerman
 from pommerman import agents
-from test_agent import TestAgent
 from docker_agent import DockerAgent
 # import matplotlib.pyplot as plt
+from pommerman.agents import BaseAgent
+from feature_engineer import FeatureEngineer
 
 
 def main():
@@ -41,11 +42,24 @@ def main():
             env.render()
             actions = env.act(state)
             state, reward, done, info = env.step(actions)
-            # print(state)
+            print(info["result"].value)
             # if i == 300:
             #     break
         print('Episode {} finished'.format(i_episode))
     env.close()
+
+
+class TestAgent(BaseAgent):
+    FeatureEngineer = FeatureEngineer()
+
+    def act(self, observation, action_space):
+
+        # print(sys.getsizeof(observation))
+        # self.FeatureEngineer.make_features(observation)
+        # time.sleep(0.5)
+        # print(observation["teammate"].value)
+        # print(observation)
+        return 0 #random.randint(0, 4), random.randint(0, 4), random.randint(0, 4)
 
 
 main()

@@ -1,23 +1,46 @@
 import tensorflow as tf
 import numpy as np
 import time
+from constants import *
+import matplotlib.pyplot as plt
+from pretraining_database import x1_map, x2_map, x1_player, x2_player, y1, y2
 
 
 class LargeNetwork:
 
-    n_classes = 12
-    lr = 3e-4
-    n_epochs = 1
-    n_batches = 3
-    batch_size = 4
-    n_map_features = 14
-    n_player_features = 1
+    def init_dummy_model(self):
+        x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
+        x2_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
+        x1_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
+        x2_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
 
-    def initialize_model(self):
-        x1_map = tf.keras.layers.Input(shape=(11, 11, self.n_map_features))
-        x2_map = tf.keras.layers.Input(shape=(11, 11, self.n_map_features))
-        x1_player = tf.keras.layers.Input(shape=(11, 11, self.n_player_features))
-        x2_player = tf.keras.layers.Input(shape=(11, 11, self.n_player_features))
+        conv1 = tf.keras.layers.Conv2D(32, 3, activation='relu', padding="same")
+
+        x1_latent = conv1(x1_map)
+        x2_latent = conv1(x2_map)
+
+        merged = tf.keras.layers.concatenate([x1_latent, x1_player, x2_latent, x2_player], axis=3)
+
+        conv2 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(merged)
+
+        flat = tf.keras.layers.Flatten()(conv2)
+
+        y1_fc1 = tf.keras.layers.Dense(32, activation='relu')(flat)
+        y1_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent1")(y1_fc1)
+
+        y2_fc1 = tf.keras.layers.Dense(32, activation='relu')(flat)
+        y2_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent2")(y2_fc1)
+
+        model = tf.keras.models.Model(inputs=[x1_map, x2_map, x1_player, x2_player], outputs=[y1_out, y2_out])
+        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[1, 1],
+                      metrics=['accuracy'])
+        self.model = model
+
+    def init_model(self):
+        x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
+        x2_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
+        x1_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
+        x2_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
 
         conv1 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
         conv2 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
@@ -39,37 +62,62 @@ class LargeNetwork:
 
         flat = tf.keras.layers.Flatten()(conv11)
 
-        fc1 = tf.keras.layers.Dense(4096, activation='relu')(flat)
-        fc2 = tf.keras.layers.Dense(1024, activation='relu')(fc1)
-        fc3 = tf.keras.layers.Dense(512, activation='relu')(fc2)
-        fc4 = tf.keras.layers.Dense(128, activation='relu')(fc3)
-        fc5 = tf.keras.layers.Dense(32, activation='relu')(fc4)
-        out = tf.keras.layers.Dense(self.n_classes, activation='softmax')(fc5)
+        y1_fc1 = tf.keras.layers.Dense(2048, activation='relu')(flat)
+        y1_fc2 = tf.keras.layers.Dense(512, activation='relu')(y1_fc1)
+        y1_fc3 = tf.keras.layers.Dense(256, activation='relu')(y1_fc2)
+        y1_fc4 = tf.keras.layers.Dense(64, activation='relu')(y1_fc3)
+        y1_fc5 = tf.keras.layers.Dense(16, activation='relu')(y1_fc4)
+        y1_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent1")(y1_fc5)
 
-        model = tf.keras.models.Model(inputs=[x1_map, x2_map, x1_player, x2_player], outputs=out)
-        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=self.lr))
+        y2_fc1 = tf.keras.layers.Dense(2048, activation='relu')(flat)
+        y2_fc2 = tf.keras.layers.Dense(512, activation='relu')(y2_fc1)
+        y2_fc3 = tf.keras.layers.Dense(256, activation='relu')(y2_fc2)
+        y2_fc4 = tf.keras.layers.Dense(64, activation='relu')(y2_fc3)
+        y2_fc5 = tf.keras.layers.Dense(16, activation='relu')(y2_fc4)
+        y2_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent2")(y2_fc5)
+
+        model = tf.keras.models.Model(inputs=[x1_map, x2_map, x1_player, x2_player], outputs=[y1_out, y2_out])
+        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[1, 1],
+                      metrics=['accuracy'])
         self.model = model
-        model.summary()
 
-    def train_model(self):
-        x1_map = np.ones(shape=(512, 11, 11, self.n_map_features))
-        x2_map = np.ones(shape=(512, 11, 11, self.n_map_features))
-        x1_player = np.ones(shape=(512, 11, 11, self.n_player_features))
-        x2_player = np.ones(shape=(512, 11, 11, self.n_player_features))
-        y = np.ones(shape=(512, self.n_classes))
-        self.model.fit([x1_map, x2_map, x1_player, x2_player], y, epochs=10)
+    def train_model_on_database(self, n_epochs):
+        self.history = self.model.fit([x1_map, x2_map, x1_player, x2_player], [y1, y2], validation_split=0.1,
+                                      epochs=n_epochs).history
 
-    def test_model(self):
-        x1_map = np.random.rand(1, 11, 11, self.n_map_features).astype("float32")
-        x2_map = np.random.rand(1, 11, 11, self.n_map_features).astype("float32")
-        x1_player = np.random.rand(1, 11, 11, self.n_player_features).astype("float32")
-        x2_player = np.random.rand(1, 11, 11, self.n_player_features).astype("float32")
-        tim = time.time()
-        print(self.model([x1_map, x2_map, x1_player, x2_player]))
-        print(time.time() - tim)
+    def test_model(self, x1_map, x2_map, x1_player, x2_player):
+        out1, out2 = self.model([x1_map, x2_map, x1_player, x2_player])
+        return out1, out2
+
+    def plot_history(self):
+        # Plot training & validation accuracy values
+        plt.plot(self.history['agent1_acc'])
+        plt.plot(self.history['val_agent1_acc'])
+        plt.plot(self.history['agent2_acc'])
+        plt.plot(self.history['val_agent2_acc'])
+        plt.title('Model accuracy')
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epoch')
+        plt.legend(['agent1_acc', 'val_agent1_acc', 'agent2_acc', 'val_agent2_acc'], loc='upper left')
+        plt.show()
+
+        # Plot training & validation loss values
+        plt.plot(self.history['agent1_loss'])
+        plt.plot(self.history['val_agent1_loss'])
+        plt.plot(self.history['agent2_loss'])
+        plt.plot(self.history['val_agent2_loss'])
+        plt.title('Model loss')
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.legend(['agent1_loss', 'val_agent1_loss', 'agent2_loss', 'val_agent2_loss'], loc='upper left')
+        plt.show()
+
+    def get_history_csv(self):
+        # pandas.DataFrame(self.history).to_csv("history.csv")
+        pass
 
 
 LN = LargeNetwork()
-LN.initialize_model()
-LN.train_model()
+LN.init_dummy_model()
+LN.train_model_on_database(2)
 # LN.test_model()
