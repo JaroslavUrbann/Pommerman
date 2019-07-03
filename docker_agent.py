@@ -18,7 +18,7 @@ class DockerAgent(BaseAgent):
     def __init__(self,
                  docker_image,
                  port,
-                 agent_id,
+                 id,
                  server='http://localhost',
                  character=characters.Bomber,
                  docker_client=None,
@@ -26,7 +26,7 @@ class DockerAgent(BaseAgent):
         super(DockerAgent, self).__init__(character)
 
         self.feature_engineer = FeatureEngineer()
-        self.agent_id = agent_id
+        self.id = id
 
         self._docker_image = docker_image
         self._docker_client = docker_client
@@ -39,7 +39,7 @@ class DockerAgent(BaseAgent):
         self._acknowledged = False  # Becomes True when the container is ready.
         self._server = server
         self._port = port
-        self._timeout = 32
+        self._timeout = 64
         self._container = None
         self._env_vars = env_vars or {}
         # Pass env variables starting with DOCKER_AGENT to the container.
@@ -77,8 +77,8 @@ class DockerAgent(BaseAgent):
             auto_remove=True,
             ports={10080: self._port},
             environment=self._env_vars)
-        for line in self._container.logs(stream=True):
-            print(line.decode("utf-8").strip())
+        # for line in self._container.logs(stream=True):
+        #     print(line.decode("utf-8").strip())
 
     def _wait_for_docker(self):
         """Wait for network service to appear. A timeout of 0 waits forever."""
@@ -133,7 +133,7 @@ class DockerAgent(BaseAgent):
         try:
             req = requests.post(
                 request_url,
-                timeout=0.15,
+                timeout=0.3,
                 json={
                     "obs":
                         obs_serialized,
@@ -142,18 +142,13 @@ class DockerAgent(BaseAgent):
                 })
             action = req.json()['action']
         except requests.exceptions.Timeout as e:
-            print('Timeout!')
-            # TODO: Fix this. It's ugly.
-            num_actions = len(action_space.shape)
-            if num_actions > 1:
-                return [0] * num_actions
-            else:
-                return 0
+            print('Timeout!', flush=True)
+            action = 0
 
-        if self.agent_id == 1 or self.agent_id == 2:
+        if self.id == 1 or self.id == 2:
             self.feature_engineer.update_features(obs)
             map, player = self.feature_engineer.get_features()
-            pretraining_database.add_data(map, player, action, self.agent_id)
+            pretraining_database.add_data(map, player, action, self.id)
 
         return action
 

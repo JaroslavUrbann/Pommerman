@@ -1,12 +1,16 @@
 import pommerman
+import testing_agent
 from testing_agent import TestingAgent
 from docker_agent import DockerAgent
 
 
-def test_network(n_games):
-    # print(pommerman.REGISTRY)
+def test_network(n_games, LN):
+
+    testing_agent.LN = LN
+
     # win / loss / tie
     results = (0, 0, 0)
+
     for i in range(4):
         agent1 = TestingAgent(1)
         agent2 = TestingAgent(2)
@@ -27,7 +31,6 @@ def test_network(n_games):
             state = env.reset()
             done = False
             while not done:
-                env.render()
                 actions = env.act(state)
                 state, reward, done, info = env.step(actions)
 
@@ -38,6 +41,7 @@ def test_network(n_games):
                     results[1] += 1
             else:
                 results[2] += 1
+            print("games done: " + str(i * n_games / 4 + a))
         env.close()
     print(results[0], results[1], results[2])
     return results

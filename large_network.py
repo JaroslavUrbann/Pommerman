@@ -3,7 +3,7 @@ import numpy as np
 import time
 from constants import *
 import matplotlib.pyplot as plt
-from pretraining_database import x1_map, x2_map, x1_player, x2_player, y1, y2
+import pretraining_database
 
 
 class LargeNetwork:
@@ -82,7 +82,8 @@ class LargeNetwork:
         self.model = model
 
     def train_model_on_database(self, n_epochs):
-        self.history = self.model.fit([x1_map, x2_map, x1_player, x2_player], [y1, y2], validation_split=0.1,
+        x, y = pretraining_database.get_database()
+        self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 
     def test_model(self, x1_map, x2_map, x1_player, x2_player):
@@ -117,7 +118,7 @@ class LargeNetwork:
         pass
 
 
-LN = LargeNetwork()
-LN.init_dummy_model()
-LN.train_model_on_database(2)
-# LN.test_model()
+if __name__ == "__main__":
+    LN = LargeNetwork()
+    LN.init_dummy_model()
+    LN.train_model_on_database(2)

@@ -70,19 +70,19 @@ def get_prediction_agent2(map, player):
 
 class TestingAgent(BaseAgent):
 
-    def __init__(self, agent_id, character=characters.Bomber):
+    def __init__(self, id, character=characters.Bomber):
         super(TestingAgent, self).__init__(character)
         self.feature_engineer = FeatureEngineer()
-        self.agent_id = agent_id
+        self.id = id
 
     def act(self, observation, action_space):
         global y1, y2
         self.feature_engineer.update_features(observation)
         map, player = self.feature_engineer.get_features()
-        if self.agent_id == 1:
+        if self.id == 1:
             get_prediction_agent1(map, player)
             y = min(y1, 5)
-        if self.agent_id == 2:
+        if self.id == 2:
             get_prediction_agent2(map, player)
             y = min(y1, 5)
         return y

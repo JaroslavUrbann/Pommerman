@@ -50,10 +50,10 @@ def main():
 
 
 class TestAgent(BaseAgent):
-    FeatureEngineer = FeatureEngineer()
+    feature_engineer = FeatureEngineer()
 
     def act(self, observation, action_space):
-
+        self.feature_engineer.update_features(observation)
         # print(sys.getsizeof(observation))
         # self.FeatureEngineer.make_features(observation)
         # time.sleep(0.5)
