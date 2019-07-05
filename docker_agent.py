@@ -4,6 +4,7 @@ import os
 import threading
 import requests
 import docker
+import subprocess
 
 from pommerman.agents import BaseAgent
 from pommerman import utility
@@ -165,19 +166,21 @@ class DockerAgent(BaseAgent):
         except requests.exceptions.Timeout as e:
             print('Timeout in episode_end()!')
 
-    def shutdown(self):
-        request_url = "http://localhost:{}/shutdown".format(self._port)
-        try:
-            req = requests.post(
-                request_url,
-                timeout=0.5,
-                json={})
-        except requests.exceptions.Timeout as e:
-            print('Timeout in shutdown()!')
-
-        print("Stopping container..")
-        if self._container:
-            try:
-                return self._container.remove(force=True)
-            except docker.errors.NotFound as e:
-                return True
+    # def shutdown(self):
+        # if self.id == 0:
+        #     subprocess.call('docker kill $(docker ps -q)', shell=True)
+        # request_url = "http://localhost:{}/shutdown".format(self._port)
+        # try:
+        #     req = requests.post(
+        #         request_url,
+        #         timeout=5,
+        #         json={})
+        # except requests.exceptions.Timeout as e:
+        #     print('Timeout in shutdown()!')
+        #
+        # print("Stopping container..")
+        # if self._container:
+        #     try:
+        #         return self._container.remove(force=True)
+        #     except docker.errors.NotFound as e:
+        #         return True

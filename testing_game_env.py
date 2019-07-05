@@ -2,6 +2,8 @@ import pommerman
 import testing_agent
 from testing_agent import TestingAgent
 from docker_agent import DockerAgent
+import time
+import subprocess
 
 
 def test_network(n_games, LN):
@@ -9,7 +11,7 @@ def test_network(n_games, LN):
     testing_agent.LN = LN
 
     # win / loss / tie
-    results = (0, 0, 0)
+    results = [0, 0, 0]
 
     for i in range(4):
         agent1 = TestingAgent(1)
@@ -31,6 +33,7 @@ def test_network(n_games, LN):
             state = env.reset()
             done = False
             while not done:
+                env.render()
                 actions = env.act(state)
                 state, reward, done, info = env.step(actions)
 
@@ -41,7 +44,7 @@ def test_network(n_games, LN):
                     results[1] += 1
             else:
                 results[2] += 1
-            print("games done: " + str(i * n_games / 4 + a))
+            print("games done: " + str(int(i * n_games / 4 + a + 1)))
         env.close()
-    print(results[0], results[1], results[2])
+        subprocess.call('docker kill $(docker ps -q)', shell=True)
     return results

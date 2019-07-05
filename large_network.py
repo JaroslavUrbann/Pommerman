@@ -4,9 +4,68 @@ import time
 from constants import *
 import matplotlib.pyplot as plt
 import pretraining_database
+import pandas
 
 
 class LargeNetwork:
+
+    def load_model(self, drive, id):
+        self.weights = drive.CreateFile({'id': id})
+        self.weights.GetContentFile(self.weights["title"])
+        self.model = tf.keras.models.load_model("LN.h5")
+
+    # uploads new weights if name is given, otherwise updates weights that were downloaded in load_model
+    def upload_model(self, drive, name=None):
+        if name:
+            self.model.save(name, overwrite=True)
+            new_model = drive.CreateFile({'title': name})
+            new_model.SetContentFile(name)
+            new_model.Upload()
+        else:
+            self.model.save(self.weights["title"], overwrite=True)
+            self.weights.SetContentFile(self.weights["title"])
+            self.weights.Upload()
+
+    # uploads new csv file if name is given, downloads old csv and appends new results if id is given
+    def upload_logs(self, drive, id=None, name=None, test_results=None):
+        if id:
+            logs = drive.CreateFile({'id': id})
+            logs.GetContentFile(logs["title"])
+            df = pandas.read_csv(logs["title"])
+            df2 = pandas.DataFrame(self.history)
+            df2["test"] = ""
+            df = df.append(df2, ignore_index=True, sort=False)
+            if test_results:
+                n_rows, n_cols = df.shape
+                df.iat[n_rows - 1, n_cols - 1] = str("/".join(test_results))
+            df.to_csv(logs["title"])
+            logs.SetContentFile(logs["title"])
+        if name:
+            df = pandas.DataFrame(self.history)
+            df["test"] = ""
+            if test_results:
+                n_rows, n_cols = df.shape
+                df.iat[n_rows - 1, n_cols - 1] = str("/".join(test_results))
+            df.to_csv(name)
+            logs = drive.CreateFile({'title': name})
+            logs.SetContentFile(name)
+        logs.Upload()
+
+    def save_logs(self):
+        df = pandas.DataFrame(self.history)
+        print(df)
+        df["test"] = ""
+        n_rows, n_cols = df.shape
+        print(df)
+        df.iat[n_rows - 1, n_cols - 1] = "32/3/23"
+        print(df)
+        df2 = pandas.DataFrame(self.history)
+        df2["test"] = ""
+        df = df.append(df2, ignore_index=True, sort=False)
+        n_rows, n_cols = df.shape
+        df.iat[n_rows - 1, n_cols - 1] = "66/44/654"
+        print(df)
+
 
     def init_dummy_model(self):
         x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
@@ -86,7 +145,7 @@ class LargeNetwork:
         self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 
-    def test_model(self, x1_map, x2_map, x1_player, x2_player):
+    def predict(self, x1_map, x2_map, x1_player, x2_player):
         out1, out2 = self.model([x1_map, x2_map, x1_player, x2_player])
         return out1, out2
 
@@ -113,12 +172,10 @@ class LargeNetwork:
         plt.legend(['agent1_loss', 'val_agent1_loss', 'agent2_loss', 'val_agent2_loss'], loc='upper left')
         plt.show()
 
-    def get_history_csv(self):
-        # pandas.DataFrame(self.history).to_csv("history.csv")
-        pass
-
 
 if __name__ == "__main__":
     LN = LargeNetwork()
     LN.init_dummy_model()
-    LN.train_model_on_database(2)
+    pretraining_database.create_database(320)
+    LN.train_model_on_database(4)
+    LN.save_logs()
