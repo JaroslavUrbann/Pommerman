@@ -1,4 +1,5 @@
 import pretraining_game_env
+import pretraining_database
 from large_network import LargeNetwork
 import testing_game_env
 import subprocess
@@ -7,7 +8,7 @@ import gdrive_auth
 
 def main():
     # subprocess.call('docker kill $(docker ps -q)', shell=True)
-    pretraining_game_env.create_database(database_size=50)
+    pretraining_database.create_database(db_size=50)
     LN = LargeNetwork()
     LN.init_dummy_model()
     LN.train_model_on_database(n_epochs=4)

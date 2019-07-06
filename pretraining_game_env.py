@@ -7,10 +7,10 @@ import time
 import subprocess
 
 
-def create_database(database_size):
+def fill_database(db_size):
     # print(pommerman.REGISTRY)
 
-    pretraining_database.create_database(database_size)
+    pretraining_database.create_database(db_size)
 
     for i in range(4):
         # just to prevent re-initializing dockers 4x when using small db size
