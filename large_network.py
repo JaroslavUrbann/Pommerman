@@ -37,7 +37,7 @@ class LargeNetwork:
             df = df.append(df2, ignore_index=True, sort=False)
             if test_results:
                 n_rows, n_cols = df.shape
-                df.iat[n_rows - 1, n_cols - 1] = str("/".join(test_results))
+                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
             df.to_csv(logs["title"])
             logs.SetContentFile(logs["title"])
         if name:
@@ -45,7 +45,7 @@ class LargeNetwork:
             df["test"] = ""
             if test_results:
                 n_rows, n_cols = df.shape
-                df.iat[n_rows - 1, n_cols - 1] = str("/".join(test_results))
+                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
             df.to_csv(name)
             logs = drive.CreateFile({'title': name})
             logs.SetContentFile(name)
