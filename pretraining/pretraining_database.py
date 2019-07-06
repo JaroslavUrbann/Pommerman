@@ -40,12 +40,13 @@ def get_database():
 
 def add_data(map, player, action, id):
     global x1_map, x2_map, x1_player, x2_player, y1, y2, step_index
-    if step_index < database_size:
-        if id == 1:
-            x1_map[step_index] = map
-            x1_player[step_index] = player
-            y1[step_index] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)
-        if id == 2:
-            x2_map[step_index] = map
-            x2_player[step_index] = player
-            y2[step_index] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)
+    i = step_index + int(id == 3 or id == 4)
+    if i < database_size:
+        if id == 1 or id == 3:
+            x1_map[i] = map
+            x1_player[i] = player
+            y1[i] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)
+        if id == 2 or id == 4:
+            x2_map[i] = map
+            x2_player[i] = player
+            y2[i] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)

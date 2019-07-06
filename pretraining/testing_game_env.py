@@ -1,14 +1,13 @@
 import pommerman
-import testing_agent
-from testing_agent import TestingAgent
-from docker_agent import DockerAgent
-import time
+from agents import LN_agent
+from agents.LN_agent import TestingAgent
+from agents.docker_agent import DockerAgent
 import subprocess
 
 
 def test_network(n_games, LN):
 
-    testing_agent.LN = LN
+    LN_agent.LN = LN
 
     # win / loss / tie
     results = [0, 0, 0]

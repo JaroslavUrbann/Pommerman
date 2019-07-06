@@ -4,15 +4,15 @@ import os
 import threading
 import requests
 import docker
-import subprocess
 
 from pommerman.agents import BaseAgent
 from pommerman import utility
 from pommerman import characters
-import pretraining_database
+from pretraining import pretraining_database
 from feature_engineer import FeatureEngineer
 
 
+# Docker doesn't work in Google Colab, leaving this for now
 class DockerAgent(BaseAgent):
     """The Docker Agent that Connects to a Docker container where the character runs."""
 

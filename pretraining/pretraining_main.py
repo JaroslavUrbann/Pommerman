@@ -1,7 +1,5 @@
-import pretraining_game_env
-import pretraining_database
-from large_network import LargeNetwork
-import testing_game_env
+from pretraining.large_network import LargeNetwork
+from pretraining import testing_game_env, pretraining_game_env, pretraining_database
 import subprocess
 import gdrive_auth
 import argparse

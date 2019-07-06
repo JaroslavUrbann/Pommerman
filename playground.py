@@ -1,8 +1,5 @@
-from PIL import Image
-from IPython import display
 import pommerman
 from pommerman import agents
-from docker_agent import DockerAgent
 # import matplotlib.pyplot as plt
 from pommerman.agents import BaseAgent
 from feature_engineer import FeatureEngineer

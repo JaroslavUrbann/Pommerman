@@ -1,9 +1,7 @@
 import tensorflow as tf
-import numpy as np
-import time
 from constants import *
 import matplotlib.pyplot as plt
-import pretraining_database
+from pretraining import pretraining_database
 import pandas
 
 
