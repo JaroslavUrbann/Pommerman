@@ -16,8 +16,8 @@ def main():
     # result = testing_game_env.test_network(n_games=4, LN=LN)
     result = [3, 2, 1]
     drive = gdrive_auth.get_drive()
-    LN.upload_logs(drive, name="asdf", test_results=result)
-    LN.upload_model(drive, name="asdf")
+    LN.upload_logs(drive, name="test_ads", test_results=result)
+    LN.upload_model(drive, name="test_ads")
     # print(result)
 
 main()

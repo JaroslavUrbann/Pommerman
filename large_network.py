@@ -12,13 +12,13 @@ class LargeNetwork:
     def load_model(self, drive, id):
         self.weights = drive.CreateFile({'id': id})
         self.weights.GetContentFile(self.weights["title"])
-        self.model = tf.keras.models.load_model("LN.h5")
+        self.model = tf.keras.models.load_model(self.weights["title"])
 
     # uploads new weights if name is given, otherwise updates weights that were downloaded in load_model
     def upload_model(self, drive, name=None):
         if name:
             self.model.save(name, overwrite=True)
-            new_model = drive.CreateFile({'title': name})
+            new_model = drive.CreateFile({'title': name + ".h5"})
             new_model.SetContentFile(name)
             new_model.Upload()
         else:
@@ -47,7 +47,7 @@ class LargeNetwork:
                 n_rows, n_cols = df.shape
                 df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
             df.to_csv(name)
-            logs = drive.CreateFile({'title': name})
+            logs = drive.CreateFile({'title': name + ".csv"})
             logs.SetContentFile(name)
         logs.Upload()
 
