@@ -9,65 +9,61 @@ import pandas
 
 class LargeNetwork:
 
-    def load_model(self, drive, id):
-        self.weights = drive.CreateFile({'id': id})
-        self.weights.GetContentFile(self.weights["title"])
-        self.model = tf.keras.models.load_model(self.weights["title"])
+    def __init__(self, drive):
+        self.name = None
+        self.model_id = None
+        self.log_id = None
+        self.weights = None
+        self.model = None
+        self.drive = drive
+
+    def load_model(self, model_id, log_id):
+        self.model_id = model_id
+        self.log_id = log_id
+        self.weights = self.drive.CreateFile({'id': self.model_id})
+        self.weights.GetContentFile(self.weights["title"] + ".h5")
+        self.model = tf.keras.models.load_model(self.weights["title"] + ".h5")
 
     # uploads new weights if name is given, otherwise updates weights that were downloaded in load_model
-    def upload_model(self, drive, name=None):
-        if name:
-            self.model.save(name, overwrite=True)
-            new_model = drive.CreateFile({'title': name + ".h5"})
-            new_model.SetContentFile(name)
+    def upload_model(self):
+        if self.name:
+            self.model.save(self.name + ".h5", overwrite=True)
+            new_model = self.drive.CreateFile({'title': self.name + ".h5"})
+            new_model.SetContentFile(self.name + ".h5")
             new_model.Upload()
         else:
-            self.model.save(self.weights["title"], overwrite=True)
-            self.weights.SetContentFile(self.weights["title"])
+            self.model.save(self.weights["title"] + ".h5", overwrite=True)
+            self.weights.SetContentFile(self.weights["title"] + ".h5")
             self.weights.Upload()
 
     # uploads new csv file if name is given, downloads old csv and appends new results if id is given
-    def upload_logs(self, drive, id=None, name=None, test_results=None):
-        if id:
-            logs = drive.CreateFile({'id': id})
-            logs.GetContentFile(logs["title"])
-            df = pandas.read_csv(logs["title"])
+    def upload_logs(self, test_results=None):
+        if self.log_id:
+            logs = self.drive.CreateFile({'id': self.log_id})
+            logs.GetContentFile(logs["title"] + ".csv")
+            df = pandas.read_csv(logs["title"] + ".csv")
             df2 = pandas.DataFrame(self.history)
             df2["test"] = ""
             df = df.append(df2, ignore_index=True, sort=False)
             if test_results:
                 n_rows, n_cols = df.shape
-                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(int(i)) for i in test_results))
-            df.to_csv(logs["title"])
-            logs.SetContentFile(logs["title"])
-        if name:
+                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
+            df.to_csv(logs["title"] + ".csv", index=False)
+            logs.SetContentFile(logs["title"] + ".csv")
+        if self.name:
             df = pandas.DataFrame(self.history)
             df["test"] = ""
             if test_results:
                 n_rows, n_cols = df.shape
-                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(int(i)) for i in test_results))
-            df.to_csv(name)
-            logs = drive.CreateFile({'title': name + ".csv"})
-            logs.SetContentFile(name)
+                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
+            df.to_csv(self.name + ".csv", index=False)
+            logs = self.drive.CreateFile({'title': self.name + ".csv"})
+            logs.SetContentFile(self.name + ".csv")
         logs.Upload()
 
-    def save_logs(self):
-        df = pandas.DataFrame(self.history)
-        print(df)
-        df["test"] = ""
-        n_rows, n_cols = df.shape
-        print(df)
-        df.iat[n_rows - 1, n_cols - 1] = "32/3/23"
-        print(df)
-        df2 = pandas.DataFrame(self.history)
-        df2["test"] = ""
-        df = df.append(df2, ignore_index=True, sort=False)
-        n_rows, n_cols = df.shape
-        df.iat[n_rows - 1, n_cols - 1] = "66/44/654"
-        print(df)
+    def init_dummy_model(self, name):
+        self.name = name
 
-
-    def init_dummy_model(self):
         x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
         x2_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
         x1_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
@@ -95,7 +91,9 @@ class LargeNetwork:
                       metrics=['accuracy'])
         self.model = model
 
-    def init_model(self):
+    def init_model(self, name):
+        self.name = name
+
         x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
         x2_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
         x1_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
@@ -178,4 +176,3 @@ if __name__ == "__main__":
     LN.init_dummy_model()
     pretraining_database.create_database(320)
     LN.train_model_on_database(4)
-    LN.save_logs()

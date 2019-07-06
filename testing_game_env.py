@@ -33,7 +33,7 @@ def test_network(n_games, LN):
             state = env.reset()
             done = False
             while not done:
-                env.render()
+                # env.render()
                 actions = env.act(state)
                 state, reward, done, info = env.step(actions)
 

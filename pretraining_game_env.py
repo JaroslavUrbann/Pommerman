@@ -7,10 +7,9 @@ import time
 import subprocess
 
 
-def fill_database(db_size):
+def fill_database():
     # print(pommerman.REGISTRY)
-
-    pretraining_database.create_database(db_size)
+    db_size = pretraining_database.database_size
 
     for i in range(4):
         # just to prevent re-initializing dockers 4x when using small db size
@@ -40,10 +39,10 @@ def fill_database(db_size):
             state = env.reset()
             done = False
             while not done:
-                env.render()
+                # env.render()
                 actions = env.act(state)
                 state, reward, done, info = env.step(actions)
                 pretraining_database.step_index += 1
-            print("database items done: " + str(pretraining_database.step_index))
+            print("database items done: " + str(pretraining_database.step_index) + "/" + str(db_size))
         env.close()
         subprocess.call('docker kill $(docker ps -q)', shell=True)
