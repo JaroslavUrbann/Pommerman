@@ -1,22 +1,17 @@
 import pommerman
-from agents import LN_agent
-from agents.LN_agent import TestingAgent
-from agents.docker_agent import DockerAgent
-import subprocess
+from agents.eisenach_agent import EisenachAgent
 
 
-def test_network(n_games, LN):
-
-    LN_agent.LN = LN
+def test_network(n_games, agent1, agent2):
 
     # win / loss / tie
     results = [0, 0, 0]
 
     for i in range(4):
-        agent1 = TestingAgent(1)
-        agent2 = TestingAgent(2)
-        eisenach1 = DockerAgent("multiagentlearning/eisenach", 81, 0)
-        eisenach2 = DockerAgent("multiagentlearning/eisenach", 82, 0)
+        agent1 = agent1
+        agent2 = agent2
+        eisenach1 = EisenachAgent()
+        eisenach2 = EisenachAgent()
         if i == 0:
             agent_list = [agent1, eisenach1, agent2, eisenach2]
         if i == 1:
@@ -32,7 +27,7 @@ def test_network(n_games, LN):
             state = env.reset()
             done = False
             while not done:
-                # env.render()
+                env.render()
                 actions = env.act(state)
                 state, reward, done, info = env.step(actions)
 
@@ -45,5 +40,5 @@ def test_network(n_games, LN):
                 results[2] += 1
             print("games done: " + str(int(i * n_games / 4 + a + 1)))
         env.close()
-        subprocess.call('docker kill $(docker ps -q)', shell=True)
+        # subprocess.call('docker kill $(docker ps -q)', shell=True)
     return results
