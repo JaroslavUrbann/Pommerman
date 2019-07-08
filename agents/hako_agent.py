@@ -5,38 +5,35 @@ import os
 import sys
 import random
 import array
-import subprocess
+from subprocess import check_output, call
 import time
+from threading import Thread
 
 from pommerman.agents import BaseAgent
 from py4j.java_gateway import JavaGateway, GatewayParameters
 
 verbose = False
 
-server_running = False
 
+class MyAgent:
 
-class MyAgent():
-
-    def __init__(self):
-        global server_running
-        # if not server_running:
-        #     server_running = True
-        #     path = os.path.abspath("agents/hako/BBMServer.jar")
-        #     subprocess.check_output("java -Xmx10G -jar " + path, shell=True)
-        # print("xds", flush=True)
-        # time.sleep(5)
-        # print("xd", flush=True)
+    def __init__(self, a_id):
+        port = 25335 + a_id
+        self.path = os.path.abspath("agents/hako/BBMServer" + str(port) + ".jar")
+        self.server_thread = Thread(target=self.start_server, daemon=True)
+        self.server_thread.start()
+        time.sleep(3)
         self._pid = os.getpid()
-        # print("sdf", flush=True)
         self._me = -1
         self._caller_id = random.randint(1000000, 10000000)
         # print("MyAgent.__init__, pid={}, caller_id={}, me={}".format(self._pid, self._caller_id, self._me), flush=True)
-        self.gateway = JavaGateway(gateway_parameters=GatewayParameters(port=25335))
+        self.gateway = JavaGateway(gateway_parameters=GatewayParameters(port=port))
         self._addition_app = self.gateway.entry_point
         self._addition_app.init_agent(self._pid, self._caller_id, self._me)
         print("agent initialized", flush=True)
 
+    def start_server(self):
+        check_output("java -jar " + self.path, shell=True)
 
     def episode_end(self, reward):
         # print("MyAgent.episode_end, pid={}, caller_id={}, me={}".format(self._pid, self._caller_id, self._me), flush=True)
@@ -123,6 +120,5 @@ class MyAgent():
         ##########################################################################################################################################
 
     def shutdown(self):
-        global server_running
-        server_running = False
         self.gateway.shutdown()
+        call("kill -9 $(lsof -t " + self.path + ") &> /dev/null", shell=True)

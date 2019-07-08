@@ -12,7 +12,7 @@ class HakoAgent(BaseAgent):
 
     def __init__(self, a_id, character=characters.Bomber):
         super(HakoAgent, self).__init__(character)
-        self._agent = hako_agent.MyAgent()
+        self._agent = hako_agent.MyAgent(a_id)
         self.feature_engineer = FeatureEngineer()
         self.a_id = a_id
 

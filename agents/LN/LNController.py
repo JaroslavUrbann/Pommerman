@@ -18,53 +18,50 @@ class LNController:
         self.LN = LN
 
     def reset_state(self):
-        global x1_map, x2_map, x1_player, x2_player, step_index, agent1_ready, agent2_ready, is_agent1_dead, is_agent2_dead, prediction_done, y1, y2
-        x1_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
-        x2_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
-        x1_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
-        x2_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
-        y1, y2 = 0, 0
-        agent2_ready = False
-        is_agent1_dead = False
-        is_agent2_dead = False
-        prediction_done = False
+        self.x1_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
+        self.x2_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
+        self.x1_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+        self.x2_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+        self.y1, self.y2 = 0, 0
+        self.agent2_ready = False
+        self.is_agent1_dead = False
+        self.is_agent2_dead = False
+        self.prediction_done = False
 
     def get_prediction_agent1(self, map, player):
-        global x1_map, x2_map, x1_player, x2_player, step_index, agent1_ready, agent2_ready, is_agent1_dead, is_agent2_dead, prediction_done, y1, y2, LN
-        x1_map[0] = map
-        x1_player[0] = player
+        self.x1_map[0] = map
+        self.x1_player[0] = player
         tim = time.time()
 
         while True:
-            if agent2_ready or is_agent2_dead or time.time() - tim > 0.3:
+            if self.agent2_ready or self.is_agent2_dead or time.time() - tim > 0.3:
                 if time.time() - tim >= 0.3:
-                    is_agent2_dead = True
-                if is_agent2_dead:
-                    out1, out2 = LN.predict(x1_map, np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32"), x2_player, np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32"))
-                if agent2_ready:
-                    out1, out2 = LN.predict(x1_map, x2_map, x2_player, x2_player)
-                y1 = np.argmax(out1)
-                y2 = np.argmax(out2)
-                prediction_done = True
-                return
+                    self.is_agent2_dead = True
+                if self.is_agent2_dead:
+                    out1, out2 = self.LN.predict(self.x1_map, np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32"), self.x2_player, np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32"))
+                if self.agent2_ready:
+                    out1, out2 = self.LN.predict(self.x1_map, self.x2_map, self.x2_player, self.x2_player)
+                self.y1 = np.argmax(out1)
+                self.y2 = np.argmax(out2)
+                self.prediction_done = True
+                return self.y1
 
     def get_prediction_agent2(self, map, player):
-        global x1_map, x2_map, x1_player, x2_player, step_index, agent1_ready, agent2_ready, is_agent1_dead, is_agent2_dead, prediction_done, y1, y2, LN
-        x2_map[0] = map
-        x2_player[0] = player
-        agent2_ready = True
+        self.x2_map[0] = map
+        self.x2_player[0] = player
+        self.agent2_ready = True
         tim = time.time()
 
         while True:
-            if prediction_done or is_agent1_dead or time.time() - tim > 0.3:
+            if self.prediction_done or self.is_agent1_dead or time.time() - tim > 0.3:
                 if time.time() - tim >= 0.3:
-                    is_agent1_dead = True
-                if is_agent1_dead:
-                    _, out2 = LN.predict(np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32"), x2_map, np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32"), x2_player)
-                    y2 = np.argmax(out2)
-                prediction_done = False
-                agent2_ready = False
-                return
+                    self.is_agent1_dead = True
+                if self.is_agent1_dead:
+                    _, out2 = self.LN.predict(np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32"), self.x2_map, np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32"), self.x2_player)
+                    self.y2 = np.argmax(out2)
+                self.prediction_done = False
+                self.agent2_ready = False
+                return self.y2
 
 
 LNC1 = None

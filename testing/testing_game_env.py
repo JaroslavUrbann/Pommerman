@@ -2,14 +2,14 @@ import pommerman
 from agents.eisenach_agent import EisenachAgent
 
 
-def test_network(n_games, agent1, agent2):
+def test_network(n_games, agent_1, agent_2, kwargs_1, kwargs_2):
 
     # win / loss / tie
     results = [0, 0, 0]
 
     for i in range(4):
-        agent1 = agent1
-        agent2 = agent2
+        agent1 = agent_1(**kwargs_1)
+        agent2 = agent_2(**kwargs_2)
         eisenach1 = EisenachAgent()
         eisenach2 = EisenachAgent()
         if i == 0:
@@ -27,12 +27,12 @@ def test_network(n_games, agent1, agent2):
             state = env.reset()
             done = False
             while not done:
-                env.render()
+                # env.render()
                 actions = env.act(state)
                 state, reward, done, info = env.step(actions)
 
             if info["result"].value == 0:
-                if info["winners"][0] == 0 and i < 3:
+                if info["winners"][0] == 0 and i < 2:
                     results[0] += 1
                 else:
                     results[1] += 1
