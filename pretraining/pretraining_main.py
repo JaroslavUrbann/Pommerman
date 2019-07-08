@@ -1,7 +1,7 @@
 from pretraining.large_network import LargeNetwork
 from pretraining import pretraining_game_env, pretraining_database
 from agents.LN_agent import LNAgent
-from testing import testing_game_env
+from testing.testing_game_env import test_network
 import gdrive_auth
 import argparse
 
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     kwargs2 = {"a_id": 2, "n_id": 1, "LN": LN}
     agent1 = LNAgent
     agent2 = LNAgent
-    result = testing_game_env.test_network(n_games=args.n_test_games, agent_1=agent1, agent_2=agent2, kwargs_1=kwargs1, kwargs_2=kwargs2)
+    result = test_network(n_games=args.n_test_games, agent_1=agent1, agent_2=agent2, kwargs_1=kwargs1, kwargs_2=kwargs2)
 
     print(result)
     LN.upload_logs(test_results=result)
