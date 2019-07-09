@@ -30,8 +30,8 @@ class LNAgent(BaseAgent):
     def episode_end(self, reward):
         if self.agent_id == 1:
             self.LN_controller.reset_state()
-        print("avg decision time: " + str(self.tim / self._steps))
         self.feature_engineer = FeatureEngineer()
 
     def shutdown(self):
+        print("avg decision time: " + str(self.tim / self._steps))
         delete_controller(self.n_id)

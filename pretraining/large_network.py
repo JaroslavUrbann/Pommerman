@@ -36,24 +36,42 @@ class LargeNetwork:
 
     # uploads new csv file if name is given, downloads old csv and appends new results if id is given
     def upload_logs(self, test_results=None):
+        # if I want to append new data to an old log
         if self.log_id:
             logs = self.drive.CreateFile({'id': self.log_id})
             logs.GetContentFile(logs["title"] + ".csv")
             df = pandas.read_csv(logs["title"] + ".csv")
+
+            # creates a new dataframe with new history and appends it to the old one
             df2 = pandas.DataFrame(self.history)
+
+            # adds test results to the new dataframe
             df2["test"] = ""
+            df2.loc[df2.shape[0] - 1, 'test'] = str("/".join(str(i) for i in test_results))
+
+            # adds n_samples to the new dataframe
+            df["n_samples"] = ""
+            old_n_samples = df.loc[df.shape[0] - 1, 'n_samples']
+            df["n_samples"] = df.apply(lambda x: (x.name + 1) * self.n_samples + old_n_samples, axis=1)
+
+            # appends new dataframe to the old one
             df = df.append(df2, ignore_index=True, sort=False)
-            if test_results:
-                n_rows, n_cols = df.shape
-                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
+
             df.to_csv(logs["title"] + ".csv", index=False)
             logs.SetContentFile(logs["title"] + ".csv")
+
+        # if I want to create a new model log
         if self.name:
             df = pandas.DataFrame(self.history)
+
+            # creates a test column and writes the result if it is present
             df["test"] = ""
-            if test_results:
-                n_rows, n_cols = df.shape
-                df.iat[n_rows - 1, n_cols - 1] = str("/".join(str(i) for i in test_results))
+            df.loc[df.shape[0] - 1, 'test'] = str("/".join(str(i) for i in test_results))
+
+            # creates a n_samples column with the amount of samples trained on in total after each row
+            df["n_samples"] = ""
+            df["n_samples"] = df.apply(lambda x: (x.name + 1) * self.n_samples, axis=1)
+
             df.to_csv(self.name + ".csv", index=False)
             logs = self.drive.CreateFile({'title': self.name + ".csv"})
             logs.SetContentFile(self.name + ".csv")
@@ -138,6 +156,7 @@ class LargeNetwork:
 
     def train_model_on_database(self, n_epochs):
         x, y = pretraining_database.get_database()
+        self.n_samples = y.shape[0]
         self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 

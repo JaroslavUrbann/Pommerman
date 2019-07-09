@@ -37,4 +37,4 @@ if __name__ == "__main__":
     print(result)
     LN.upload_logs(test_results=result)
     LN.upload_model()
-    LN.plot_history()
+    # LN.plot_history()
