@@ -22,7 +22,7 @@ class MyAgent:
         self.path = os.path.abspath("agents/hako/BBMServer" + str(port) + ".jar")
         self.server_thread = Thread(target=self.start_server, daemon=True)
         self.server_thread.start()
-        time.sleep(3)
+        time.sleep(5)
         self._pid = os.getpid()
         self._me = -1
         self._caller_id = random.randint(1000000, 10000000)
@@ -122,3 +122,4 @@ class MyAgent:
     def shutdown(self):
         self.gateway.shutdown()
         call("kill -9 $(lsof -t " + self.path + ") &> /dev/null", shell=True)
+        time.sleep(5)

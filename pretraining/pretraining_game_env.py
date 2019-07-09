@@ -39,7 +39,7 @@ def fill_database():
                 state, reward, done, info = env.step(actions)
                 # getting 2 new values for x1 and x2 every step because I'm getting data from all 4 players
                 pretraining_database.step_index += 2
-            print("database items done: " + str(pretraining_database.step_index) + "/" + str(db_size) + " i = " + str(i))
+            print("database items done: " + str(pretraining_database.step_index) + "/" + str(db_size))
         if ng:
             env.close()
         ng = False
