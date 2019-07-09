@@ -3,10 +3,11 @@ from pretraining import pretraining_database
 import subprocess
 from pretraining.hako_agent import HakoAgent
 from pommerman.agents import SimpleAgent
-
+import time
 
 def fill_database():
     # print(pommerman.REGISTRY)
+    tim = time.time()
     db_size = pretraining_database.database_size
     ng = False
     for i in range(2):
@@ -43,3 +44,4 @@ def fill_database():
             env.close()
         ng = False
         # subprocess.call('docker kill $(docker ps -q)', shell=True)
+    print("filling db done in: " + str(time.time() - tim))

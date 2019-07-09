@@ -52,7 +52,7 @@ class LargeNetwork:
             # adds n_samples to the new dataframe
             df["n_samples"] = ""
             old_n_samples = df.loc[df.shape[0] - 1, 'n_samples']
-            df["n_samples"] = df.apply(lambda x: (x.name + 1) * self.n_samples + old_n_samples, axis=1)
+            df["n_samples"] = df.apply(lambda x: (int(x.name) + 1) * self.n_samples + old_n_samples, axis=1)
 
             # appends new dataframe to the old one
             df = df.append(df2, ignore_index=True, sort=False)
@@ -70,7 +70,7 @@ class LargeNetwork:
 
             # creates a n_samples column with the amount of samples trained on in total after each row
             df["n_samples"] = ""
-            df["n_samples"] = df.apply(lambda x: (x.name + 1) * self.n_samples, axis=1)
+            df["n_samples"] = df.apply(lambda x: (int(x.name) + 1) * self.n_samples, axis=1)
 
             df.to_csv(self.name + ".csv", index=False)
             logs = self.drive.CreateFile({'title': self.name + ".csv"})
