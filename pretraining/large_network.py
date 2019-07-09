@@ -156,7 +156,7 @@ class LargeNetwork:
 
     def train_model_on_database(self, n_epochs):
         x, y = pretraining_database.get_database()
-        self.n_samples = y.shape[0]
+        self.n_samples = y[0].shape[0]
         self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 
