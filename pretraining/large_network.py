@@ -47,12 +47,13 @@ class LargeNetwork:
 
             # adds test results to the new dataframe
             df2["test"] = ""
-            df2.loc[df2.shape[0] - 1, 'test'] = str("/".join(str(i) for i in test_results))
+            if test_results:
+                df2.loc[df2.shape[0] - 1, 'test'] = str("/".join(str(i) for i in test_results))
 
             # adds n_samples to the new dataframe
-            df["n_samples"] = ""
+            df2["n_samples"] = ""
             old_n_samples = int(df.loc[df.shape[0] - 1, 'n_samples'])
-            df["n_samples"] = df.apply(lambda x: (x.name + 1) * self.n_samples + old_n_samples, axis=1)
+            df2["n_samples"] = df2.apply(lambda x: (x.name + 1) * self.n_samples + old_n_samples, axis=1)
 
             # appends new dataframe to the old one
             df = df.append(df2, ignore_index=True, sort=False)
@@ -66,7 +67,8 @@ class LargeNetwork:
 
             # creates a test column and writes the result if it is present
             df["test"] = ""
-            df.loc[df.shape[0] - 1, 'test'] = str("/".join(str(i) for i in test_results))
+            if test_results:
+                df.loc[df.shape[0] - 1, 'test'] = str("/".join(str(i) for i in test_results))
 
             # creates a n_samples column with the amount of samples trained on in total after each row
             df["n_samples"] = ""
