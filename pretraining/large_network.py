@@ -19,8 +19,8 @@ class LargeNetwork:
         self.model_id = model_id
         self.log_id = log_id
         self.weights = self.drive.CreateFile({'id': self.model_id})
-        self.weights.GetContentFile(self.weights["title"] + ".h5")
-        self.model = tf.keras.models.load_model(self.weights["title"] + ".h5")
+        self.weights.GetContentFile(self.weights["title"])
+        self.model = tf.keras.models.load_model(self.weights["title"])
 
     # uploads new weights if name is given, otherwise updates weights that were downloaded in load_model
     def upload_model(self):
@@ -30,8 +30,8 @@ class LargeNetwork:
             new_model.SetContentFile(self.name + ".h5")
             new_model.Upload()
         else:
-            self.model.save(self.weights["title"] + ".h5", overwrite=True)
-            self.weights.SetContentFile(self.weights["title"] + ".h5")
+            self.model.save(self.weights["title"], overwrite=True)
+            self.weights.SetContentFile(self.weights["title"])
             self.weights.Upload()
 
     # uploads new csv file if name is given, downloads old csv and appends new results if id is given
@@ -39,8 +39,8 @@ class LargeNetwork:
         # if I want to append new data to an old log
         if self.log_id:
             logs = self.drive.CreateFile({'id': self.log_id})
-            logs.GetContentFile(logs["title"] + ".csv")
-            df = pandas.read_csv(logs["title"] + ".csv")
+            logs.GetContentFile(logs["title"])
+            df = pandas.read_csv(logs["title"])
 
             # creates a new dataframe with new history and appends it to the old one
             df2 = pandas.DataFrame(self.history)
@@ -58,8 +58,8 @@ class LargeNetwork:
             # appends new dataframe to the old one
             df = df.append(df2, ignore_index=True, sort=False)
 
-            df.to_csv(logs["title"] + ".csv", index=False)
-            logs.SetContentFile(logs["title"] + ".csv")
+            df.to_csv(logs["title"], index=False)
+            logs.SetContentFile(logs["title"])
 
         # if I want to create a new model log
         if self.name:
