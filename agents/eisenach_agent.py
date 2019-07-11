@@ -18,7 +18,8 @@ class EisenachAgent(BaseAgent):
         return getattr(self._character, attr)
 
     def act(self, obs, action_space):
-        with captured_stdout() as E:
+        # with captured_stdout() as E:
+        with suppress_stdout():
             decision = self.c.c_getStep_eisenach(
                 self.id,
                 10 in obs['alive'], 11 in obs['alive'], 12 in obs['alive'], 13 in obs['alive'],
@@ -68,19 +69,19 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
-class captured_stdout:
-    def __init__(self):
-        self.prevfd = None
-        self.prev = None
-
-    def __enter__(self):
-        F = tempfile.NamedTemporaryFile()
-        self.prevfd = os.dup(sys.stdout.fileno())
-        os.dup2(F.fileno(), sys.stdout.fileno())
-        self.prev = sys.stdout
-        sys.stdout = os.fdopen(self.prevfd, "w")
-        return F
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        os.dup2(self.prevfd, self.prev.fileno())
-        sys.stdout = self.prev
+# class captured_stdout:
+#     def __init__(self):
+#         self.prevfd = None
+#         self.prev = None
+#
+#     def __enter__(self):
+#         F = tempfile.NamedTemporaryFile()
+#         self.prevfd = os.dup(sys.stdout.fileno())
+#         os.dup2(F.fileno(), sys.stdout.fileno())
+#         self.prev = sys.stdout
+#         sys.stdout = os.fdopen(self.prevfd, "w")
+#         return F
+#
+#     def __exit__(self, exc_type, exc_value, traceback):
+#         os.dup2(self.prevfd, self.prev.fileno())
+#         sys.stdout = self.prev
