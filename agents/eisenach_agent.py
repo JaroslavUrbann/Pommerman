@@ -1,9 +1,11 @@
 from pommerman.agents import BaseAgent
 from pommerman import characters
+from contextlib import contextmanager
 import ctypes
 import os
 import tempfile
 import sys
+
 
 class EisenachAgent(BaseAgent):
 
@@ -33,7 +35,8 @@ class EisenachAgent(BaseAgent):
         return decision
 
     def episode_end(self, reward):
-        with captured_stdout() as E:
+        # with captured_stdout() as E:
+        with suppress_stdout():
             self.c.c_episode_end_eisenach.restype = ctypes.c_float
             avg_simsteps_per_turn = self.c.c_episode_end_eisenach(self.id)
             self.avg_simsteps_per_turns.append(avg_simsteps_per_turn)
@@ -52,6 +55,17 @@ class EisenachAgent(BaseAgent):
 
     def shutdown(self):
         pass
+
+
+@contextmanager
+def suppress_stdout():
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
 
 
 class captured_stdout:
