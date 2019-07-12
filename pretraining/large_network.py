@@ -12,6 +12,7 @@ class LargeNetwork:
         self.model_id = None
         self.log_id = None
         self.weights = None
+        self.logs = None
         self.model = None
         self.drive = drive
 
@@ -38,9 +39,9 @@ class LargeNetwork:
     def upload_logs(self, test_results=None):
         # if I want to append new data to an old log
         if self.log_id:
-            logs = self.drive.CreateFile({'id': self.log_id})
-            logs.GetContentFile(logs["title"])
-            df = pandas.read_csv(logs["title"])
+            self.logs = self.drive.CreateFile({'id': self.log_id})
+            self.logs.GetContentFile(self.logs["title"])
+            df = pandas.read_csv(self.logs["title"])
 
             # creates a new dataframe with new history and appends it to the old one
             df2 = pandas.DataFrame(self.history)
@@ -58,8 +59,8 @@ class LargeNetwork:
             # appends new dataframe to the old one
             df = df.append(df2, ignore_index=True, sort=False)
 
-            df.to_csv(logs["title"], index=False)
-            logs.SetContentFile(logs["title"])
+            df.to_csv(self.logs["title"], index=False)
+            self.logs.SetContentFile(self.logs["title"])
 
         # if I want to create a new model log
         if self.name:
@@ -75,9 +76,9 @@ class LargeNetwork:
             df["n_samples"] = df.apply(lambda x: (x.name + 1) * self.n_samples, axis=1)
 
             df.to_csv(self.name + ".csv", index=False)
-            logs = self.drive.CreateFile({'title': self.name + ".csv"})
-            logs.SetContentFile(self.name + ".csv")
-        logs.Upload()
+            self.logs = self.drive.CreateFile({'title': self.name + ".csv"})
+            self.logs.SetContentFile(self.name + ".csv")
+        self.logs.Upload()
 
     def init_dummy_model(self, name):
         self.name = name
@@ -189,9 +190,30 @@ class LargeNetwork:
         plt.legend(['agent1_loss', 'val_agent1_loss', 'agent2_loss', 'val_agent2_loss'], loc='upper left')
         plt.show()
 
+    def plot_csv(self):
+        plt.rcParams['figure.figsize'] = [15, 7]
+        plt.rcParams.update({'font.size': 18})
 
-if __name__ == "__main__":
-    LN = LargeNetwork()
-    LN.init_dummy_model()
-    pretraining_database.create_database(320)
-    LN.train_model_on_database(4)
+        df = pandas.read_csv(self.logs["title"])
+
+        ax = plt.gca()
+        df.plot(kind='line', x='n_samples', y='val_agent1_acc', ax=ax)
+        df.plot(kind='line', x='n_samples', y='val_agent2_acc', ax=ax)
+        plt.show()
+
+        ax = plt.gca()
+        df.plot(kind='line', x='n_samples', y='agent1_acc', ax=ax)
+        df.plot(kind='line', x='n_samples', y='agent2_acc', ax=ax)
+        plt.show()
+
+        ax = plt.gca()
+        df.plot(kind='line', x='n_samples', y='val_agent1_loss', ax=ax)
+        df.plot(kind='line', x='n_samples', y='val_agent2_loss', ax=ax)
+        df.plot(kind='line', x='n_samples', y='val_loss', ax=ax)
+        plt.show()
+
+        ax = plt.gca()
+        df.plot(kind='line', x='n_samples', y='agent1_loss', ax=ax)
+        df.plot(kind='line', x='n_samples', y='agent2_loss', ax=ax)
+        df.plot(kind='line', x='n_samples', y='loss', ax=ax)
+        plt.show()
