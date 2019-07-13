@@ -164,7 +164,7 @@ class LargeNetwork:
                                       epochs=n_epochs).history
 
     def predict(self, x1_map, x2_map, x1_player, x2_player):
-        out1, out2 = self.model([x1_map, x2_map, x1_player, x2_player])
+        out1, out2 = self.model.predict([x1_map, x2_map, x1_player, x2_player])
         return out1, out2
 
     def plot_history(self):
