@@ -12,7 +12,7 @@ gauth = None
 def refresh_token():
     global gauth
     while True:
-        time.sleep(45 * 60)
+        time.sleep(10 * 60)
         if gauth.access_token_expired:
             gauth.Refresh()
 
@@ -23,6 +23,6 @@ def get_drive():
     auth.authenticate_user()
     gauth = GoogleAuth()
     gauth.credentials = GoogleCredentials.get_application_default()
-    refresh = Thread(target=refresh_token, daemon=True)
+    refresh = Thread(target=refresh_token)
     refresh.start()
     return GoogleDrive(gauth)
