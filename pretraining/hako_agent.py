@@ -19,8 +19,8 @@ class HakoAgent(BaseAgent):
     def act(self, observation, action_space):
         action = self._agent.act(observation, action_space)
         self.feature_engineer.update_features(observation)
-        map, player = self.feature_engineer.get_features()
-        pretraining_database.add_data(map, player, action, self.a_id)
+        features = self.feature_engineer.get_features()
+        pretraining_database.add_data(features, action, self.a_id)
         return action
 
     def episode_end(self, reward):

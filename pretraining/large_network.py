@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, Activation, BatchNormalization
 from constants import *
 import matplotlib.pyplot as plt
 from pretraining import pretraining_database
@@ -81,78 +82,44 @@ class LargeNetwork:
         self.logs.Upload()
 
     def init_dummy_model(self, name):
-        self.name = name
-
-        x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
-        x2_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
-        x1_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
-        x2_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
-
-        conv1 = tf.keras.layers.Conv2D(32, 3, activation='relu', padding="same")
-
-        x1_latent = conv1(x1_map)
-        x2_latent = conv1(x2_map)
-
-        merged = tf.keras.layers.concatenate([x1_latent, x1_player, x2_latent, x2_player], axis=3)
-
-        conv2 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(merged)
-
-        flat = tf.keras.layers.Flatten()(conv2)
-
-        y1_fc1 = tf.keras.layers.Dense(32, activation='relu')(flat)
-        y1_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent1")(y1_fc1)
-
-        y2_fc1 = tf.keras.layers.Dense(32, activation='relu')(flat)
-        y2_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent2")(y2_fc1)
-
-        model = tf.keras.models.Model(inputs=[x1_map, x2_map, x1_player, x2_player], outputs=[y1_out, y2_out])
-        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[1, 1],
-                      metrics=['accuracy'])
-        self.model = model
+        pass
 
     def init_model(self, name):
         self.name = name
 
-        x1_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
-        x2_map = tf.keras.layers.Input(shape=(11, 11, N_MAP_FEATURES))
-        x1_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
-        x2_player = tf.keras.layers.Input(shape=(11, 11, N_PLAYER_FEATURES))
+        x1 = Input(shape=(11, 11, N_FEATURES))
+        x2 = Input(shape=(11, 11, N_FEATURES))
+        layer = tf.keras.layers.concatenate([x1, x2], axis=3)
+        layer = Conv2D(128, 3, padding="same")(layer)
+        layer = BatchNormalization()(layer)
+        layer = Activation("relu")(layer)
 
-        conv1 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
-        conv2 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
-        conv3 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
-        conv4 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
-        conv5 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
-        conv6 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")
+        for _ in range(20):
+            res = layer
+            layer = Conv2D(128, 3, padding="same")(layer)
+            layer = Activation("relu")(layer)
+            layer = Conv2D(128, 3, padding="same")(layer)
+            layer = BatchNormalization()(layer)
+            layer = Add()([layer, res])
+            layer = Activation("relu")(layer)
 
-        x1_latent = conv6(conv5(conv4(conv3(conv2(conv1(x1_map))))))
-        x2_latent = conv6(conv5(conv4(conv3(conv2(conv1(x2_map))))))
+        flat = tf.keras.layers.Flatten()(layer)
 
-        merged = tf.keras.layers.concatenate([x1_latent, x1_player, x2_latent, x2_player], axis=3)
-
-        conv7 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(merged)
-        conv8 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(conv7)
-        conv9 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(conv8)
-        conv10 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(conv9)
-        conv11 = tf.keras.layers.Conv2D(256, 3, activation='relu', padding="same")(conv10)
-
-        flat = tf.keras.layers.Flatten()(conv11)
-
-        y1_fc1 = tf.keras.layers.Dense(2048, activation='relu')(flat)
+        y1_fc1 = tf.keras.layers.Dense(1024, activation='relu')(flat)
         y1_fc2 = tf.keras.layers.Dense(512, activation='relu')(y1_fc1)
         y1_fc3 = tf.keras.layers.Dense(256, activation='relu')(y1_fc2)
         y1_fc4 = tf.keras.layers.Dense(64, activation='relu')(y1_fc3)
         y1_fc5 = tf.keras.layers.Dense(16, activation='relu')(y1_fc4)
         y1_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent1")(y1_fc5)
 
-        y2_fc1 = tf.keras.layers.Dense(2048, activation='relu')(flat)
+        y2_fc1 = tf.keras.layers.Dense(1024, activation='relu')(flat)
         y2_fc2 = tf.keras.layers.Dense(512, activation='relu')(y2_fc1)
         y2_fc3 = tf.keras.layers.Dense(256, activation='relu')(y2_fc2)
         y2_fc4 = tf.keras.layers.Dense(64, activation='relu')(y2_fc3)
         y2_fc5 = tf.keras.layers.Dense(16, activation='relu')(y2_fc4)
         y2_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent2")(y2_fc5)
 
-        model = tf.keras.models.Model(inputs=[x1_map, x2_map, x1_player, x2_player], outputs=[y1_out, y2_out])
+        model = tf.keras.models.Model(inputs=[x1, x2], outputs=[y1_out, y2_out])
         model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[1, 1],
                       metrics=['accuracy'])
         self.model = model
@@ -163,8 +130,8 @@ class LargeNetwork:
         self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 
-    def predict(self, x1_map, x2_map, x1_player, x2_player):
-        out1, out2 = self.model.predict([x1_map, x2_map, x1_player, x2_player])
+    def predict(self, x1, x2):
+        out1, out2 = self.model.predict([x1, x2])
         return out1, out2
 
     def plot_history(self):
@@ -217,3 +184,8 @@ class LargeNetwork:
         df.plot(kind='line', x='n_samples', y='agent2_loss', ax=ax)
         df.plot(kind='line', x='n_samples', y='loss', ax=ax)
         plt.show()
+
+
+if __name__ == "__main__":
+    LN = LargeNetwork(None)
+    LN.init_model("sad")

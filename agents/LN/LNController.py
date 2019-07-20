@@ -4,10 +4,8 @@ import numpy as np
 
 
 class LNController:
-    x1_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
-    x2_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
-    x1_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
-    x2_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+    x1 = np.zeros((1, 11, 11, N_FEATURES), dtype="float32")
+    x2 = np.zeros((1, 11, 11, N_FEATURES), dtype="float32")
     y1, y2 = 0, 0
     agent2_ready = False
     is_agent1_dead = False
@@ -18,19 +16,16 @@ class LNController:
         self.LN = LN
 
     def reset_state(self):
-        self.x1_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
-        self.x2_map = np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32")
-        self.x1_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
-        self.x2_player = np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32")
+        self.x1 = np.zeros((1, 11, 11, N_FEATURES), dtype="float32")
+        self.x2 = np.zeros((1, 11, 11, N_FEATURES), dtype="float32")
         self.y1, self.y2 = 0, 0
         self.agent2_ready = False
         self.is_agent1_dead = False
         self.is_agent2_dead = False
         self.prediction_done = False
 
-    def get_prediction_agent1(self, map, player):
-        self.x1_map[0] = map
-        self.x1_player[0] = player
+    def get_prediction_agent1(self, features):
+        self.x1 = features
         tim = time.time()
 
         while True:
@@ -38,17 +33,16 @@ class LNController:
                 if time.time() - tim >= 0.3:
                     self.is_agent2_dead = True
                 if self.is_agent2_dead:
-                    out1, out2 = self.LN.predict(self.x1_map, np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32"), self.x2_player, np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32"))
+                    out1, out2 = self.LN.predict(self.x1, np.zeros((1, 11, 11, N_FEATURES), dtype="float32"))
                 if self.agent2_ready:
-                    out1, out2 = self.LN.predict(self.x1_map, self.x2_map, self.x2_player, self.x2_player)
+                    out1, out2 = self.LN.predict(self.x1, self.x2)
                 self.y1 = np.argmax(out1)
                 self.y2 = np.argmax(out2)
                 self.prediction_done = True
                 return self.y1
 
-    def get_prediction_agent2(self, map, player):
-        self.x2_map[0] = map
-        self.x2_player[0] = player
+    def get_prediction_agent2(self, features):
+        self.x2 = features
         self.agent2_ready = True
         tim = time.time()
 
@@ -57,7 +51,7 @@ class LNController:
                 if time.time() - tim >= 0.3:
                     self.is_agent1_dead = True
                 if self.is_agent1_dead:
-                    _, out2 = self.LN.predict(np.zeros((1, 11, 11, N_MAP_FEATURES), dtype="float32"), self.x2_map, np.zeros((1, 11, 11, N_PLAYER_FEATURES), dtype="float32"), self.x2_player)
+                    _, out2 = self.LN.predict(np.zeros((1, 11, 11, N_FEATURES)), self.x2)
                     self.y2 = np.argmax(out2)
                 self.prediction_done = False
                 self.agent2_ready = False

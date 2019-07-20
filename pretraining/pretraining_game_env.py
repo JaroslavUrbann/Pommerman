@@ -47,4 +47,5 @@ def fill_database():
             env.close()
         ng = False
         # subprocess.call('docker kill $(docker ps -q)', shell=True)
+    print("-----------------------------------------------------------------------------")
     print("filling db done in: " + str(time.time() - tim))

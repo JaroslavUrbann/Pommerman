@@ -23,8 +23,7 @@ class FeatureEngineer:
 
     _status_map = np.zeros(BOARD_SIZE)
 
-    _map_features = np.zeros((BOARD_SIZE[0], BOARD_SIZE[1], N_MAP_FEATURES))
-    _player_features = np.zeros((BOARD_SIZE[0], BOARD_SIZE[1], N_PLAYER_FEATURES))
+    _features = np.zeros((BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES))
 
     # _agent_number = 0
     #
@@ -224,20 +223,19 @@ class FeatureEngineer:
         self._update_status_map(observation)
 
     def get_features(self):
-        self._map_features[:, :, 0] = self._wood_map
-        self._map_features[:, :, 0] = self._stone_map
-        self._map_features[:, :, 0] = self._ammo_powerup_map
-        self._map_features[:, :, 0] = self._range_powerup_map
-        self._map_features[:, :, 0] = self._kick_powerup_map
-        self._map_features[:, :, 0] = self._enemies_map
-        self._map_features[:, :, 0] = self._teammate_map
-        self._map_features[:, :, 0] = self._agent_map
-        self._map_features[:, :, 0] = self._fog_map
-        self._map_features[:, :, 0] = self._bomb_map
-        self._map_features[:, :, 0] = self._bomb_history_map
-        self._map_features[:, :, 0] = self._flame_map
-        self._map_features[:, :, 0] = self._blast_strength_map
+        self._features[:, :, 0] = self._wood_map
+        self._features[:, :, 1] = self._stone_map
+        self._features[:, :, 2] = self._ammo_powerup_map
+        self._features[:, :, 3] = self._range_powerup_map
+        self._features[:, :, 4] = self._kick_powerup_map
+        self._features[:, :, 5] = self._enemies_map
+        self._features[:, :, 6] = self._teammate_map
+        self._features[:, :, 7] = self._agent_map
+        self._features[:, :, 8] = self._fog_map
+        self._features[:, :, 9] = self._bomb_map
+        self._features[:, :, 10] = self._bomb_history_map
+        self._features[:, :, 11] = self._flame_map
+        self._features[:, :, 12] = self._blast_strength_map
+        self._features[:, :, 13] = self._status_map
 
-        self._player_features[:, :, 0] = self._status_map
-
-        return self._map_features, self._player_features
+        return self._features

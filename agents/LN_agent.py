@@ -18,11 +18,11 @@ class LNAgent(BaseAgent):
     def act(self, observation, action_space):
         tim = time.time()
         self.feature_engineer.update_features(observation)
-        map, player = self.feature_engineer.get_features()
+        features = self.feature_engineer.get_features()
         if self.a_id == 1:
-            y = self.LN_controller.get_prediction_agent1(map, player)
+            y = self.LN_controller.get_prediction_agent1(features)
         if self.a_id == 2:
-            y = self.LN_controller.get_prediction_agent2(map, player)
+            y = self.LN_controller.get_prediction_agent2(features)
         self.tim += time.time() - tim
         self._steps += 1
         return int(min(y, 5))

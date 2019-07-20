@@ -148,8 +148,8 @@ class DockerAgent(BaseAgent):
 
         if self.id == 1 or self.id == 2:
             self.feature_engineer.update_features(obs)
-            map, player = self.feature_engineer.get_features()
-            pretraining_database.add_data(map, player, action, self.id)
+            features = self.feature_engineer.get_features()
+            pretraining_database.add_data(features, action, self.id)
 
         return action
 
