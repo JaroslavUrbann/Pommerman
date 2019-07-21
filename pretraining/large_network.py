@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, Activation, BatchNormalization
+from tensorflow.python.keras.regularizers import l2
 from constants import *
 import matplotlib.pyplot as plt
 from pretraining import pretraining_database
@@ -86,49 +87,74 @@ class LargeNetwork:
 
     def init_model(self, name):
         self.name = name
+        l2const = 1e-4
 
         x1 = Input(shape=(11, 11, N_FEATURES))
         x2 = Input(shape=(11, 11, N_FEATURES))
         layer = tf.keras.layers.concatenate([x1, x2], axis=3)
-        layer = Conv2D(128, 3, padding="same")(layer)
-        layer = BatchNormalization()(layer)
+        layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
         layer = Activation("relu")(layer)
+        layer = BatchNormalization()(layer)
 
-        for _ in range(20):
+        for _ in range(40):
             res = layer
-            layer = Conv2D(128, 3, padding="same")(layer)
+            layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
             layer = Activation("relu")(layer)
-            layer = Conv2D(128, 3, padding="same")(layer)
+            layer = BatchNormalization()(layer)
+            layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
             layer = BatchNormalization()(layer)
             layer = Add()([layer, res])
             layer = Activation("relu")(layer)
 
-        flat = Flatten()(layer)
+        y1 = Conv2D(128, 1, padding="same", kernel_regularizer=l2(l2const))(layer)
+        y1 = Activation("relu")(y1)
+        y1 = BatchNormalization()(y1)
+        y1 = Flatten()(y1)
+        y1 = Dense(1024, kernel_regularizer=l2(l2const))(y1)
+        y1 = Activation("relu")(y1)
+        y1 = BatchNormalization()(y1)
 
-        y1 = Dense(1024)(flat)
-        y1 = BatchNormalization()(y1)
+        y1 = Dense(512, kernel_regularizer=l2(l2const))(y1)
         y1 = Activation("relu")(y1)
-        y1 = Dense(512)(y1)
         y1 = BatchNormalization()(y1)
+
+        y1 = Dense(256, kernel_regularizer=l2(l2const))(y1)
         y1 = Activation("relu")(y1)
-        y1 = Dense(256, activation="relu")(y1)
-        y1 = Dense(64, activation="relu")(y1)
+        y1 = BatchNormalization()(y1)
+
+        y1 = Dense(64, kernel_regularizer=l2(l2const))(y1)
+        y1 = Activation("relu")(y1)
+        y1 = BatchNormalization()(y1)
+
         y1 = Dense(16, activation="relu")(y1)
         y1 = Dense(N_CLASSES, activation='softmax', name="agent1")(y1)
 
-        y2 = Dense(1024)(flat)
-        y2 = BatchNormalization()(y2)
+        y2 = Conv2D(128, 1, padding="same", kernel_regularizer=l2(l2const))(layer)
         y2 = Activation("relu")(y2)
-        y2 = Dense(512)(y2)
         y2 = BatchNormalization()(y2)
+        y2 = Flatten()(y2)
+        y2 = Dense(1024, kernel_regularizer=l2(l2const))(y2)
         y2 = Activation("relu")(y2)
-        y2 = Dense(256, activation="relu")(y2)
-        y2 = Dense(64, activation="relu")(y2)
+        y2 = BatchNormalization()(y2)
+
+        y2 = Dense(512, kernel_regularizer=l2(l2const))(y2)
+        y2 = Activation("relu")(y2)
+        y2 = BatchNormalization()(y2)
+
+        y2 = Dense(256, kernel_regularizer=l2(l2const))(y2)
+        y2 = Activation("relu")(y2)
+        y2 = BatchNormalization()(y2)
+
+        y2 = Dense(64, kernel_regularizer=l2(l2const))(y2)
+        y2 = Activation("relu")(y2)
+        y2 = BatchNormalization()(y2)
+
         y2 = Dense(16, activation="relu")(y2)
         y2 = Dense(N_CLASSES, activation='softmax', name="agent2")(y2)
 
         model = tf.keras.models.Model(inputs=[x1, x2], outputs=[y1, y2])
-        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[0.5, 0.5],
+        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR),
+                      loss_weights=[0.5, 0.5],
                       metrics=['accuracy'])
         self.model = model
 
