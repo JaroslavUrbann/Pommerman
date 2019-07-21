@@ -103,24 +103,32 @@ class LargeNetwork:
             layer = Add()([layer, res])
             layer = Activation("relu")(layer)
 
-        flat = tf.keras.layers.Flatten()(layer)
+        flat = Flatten()(layer)
 
-        y1_fc1 = tf.keras.layers.Dense(1024, activation='relu')(flat)
-        y1_fc2 = tf.keras.layers.Dense(512, activation='relu')(y1_fc1)
-        y1_fc3 = tf.keras.layers.Dense(256, activation='relu')(y1_fc2)
-        y1_fc4 = tf.keras.layers.Dense(64, activation='relu')(y1_fc3)
-        y1_fc5 = tf.keras.layers.Dense(16, activation='relu')(y1_fc4)
-        y1_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent1")(y1_fc5)
+        y1 = Dense(1024)(flat)
+        y1 = BatchNormalization()(y1)
+        y1 = Activation("relu")(y1)
+        y1 = Dense(512)(y1)
+        y1 = BatchNormalization()(y1)
+        y1 = Activation("relu")(y1)
+        y1 = Dense(256, activation="relu")(y1)
+        y1 = Dense(64, activation="relu")(y1)
+        y1 = Dense(16, activation="relu")(y1)
+        y1 = Dense(N_CLASSES, activation='softmax', name="agent1")(y1)
 
-        y2_fc1 = tf.keras.layers.Dense(1024, activation='relu')(flat)
-        y2_fc2 = tf.keras.layers.Dense(512, activation='relu')(y2_fc1)
-        y2_fc3 = tf.keras.layers.Dense(256, activation='relu')(y2_fc2)
-        y2_fc4 = tf.keras.layers.Dense(64, activation='relu')(y2_fc3)
-        y2_fc5 = tf.keras.layers.Dense(16, activation='relu')(y2_fc4)
-        y2_out = tf.keras.layers.Dense(N_CLASSES, activation='softmax', name="agent2")(y2_fc5)
+        y2 = Dense(1024)(flat)
+        y2 = BatchNormalization()(y2)
+        y2 = Activation("relu")(y2)
+        y2 = Dense(512)(y2)
+        y2 = BatchNormalization()(y2)
+        y2 = Activation("relu")(y2)
+        y2 = Dense(256, activation="relu")(y2)
+        y2 = Dense(64, activation="relu")(y2)
+        y2 = Dense(16, activation="relu")(y2)
+        y2 = Dense(N_CLASSES, activation='softmax', name="agent2")(y2)
 
-        model = tf.keras.models.Model(inputs=[x1, x2], outputs=[y1_out, y2_out])
-        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[1, 1],
+        model = tf.keras.models.Model(inputs=[x1, x2], outputs=[y1, y2])
+        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR), loss_weights=[0.5, 0.5],
                       metrics=['accuracy'])
         self.model = model
 
