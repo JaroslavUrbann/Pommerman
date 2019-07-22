@@ -25,7 +25,7 @@ class LNController:
         self.prediction_done = False
 
     def get_prediction_agent1(self, features):
-        self.x1 = features
+        self.x1 = np.expand_dims(features, axis=0)
         tim = time.time()
 
         while True:
@@ -42,7 +42,7 @@ class LNController:
                 return self.y1
 
     def get_prediction_agent2(self, features):
-        self.x2 = features
+        self.x2 = np.expand_dims(features, axis=0)
         self.agent2_ready = True
         tim = time.time()
 
