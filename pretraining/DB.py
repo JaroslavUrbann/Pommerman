@@ -32,10 +32,11 @@ def next_episode():
 
 
 def add_data(state, actions):
-    global x, y, feature_engineers, step_index
+    global x, y, feature_engineers, step_index, database_size
     for agent in state[0]["alive"]:
-        i = agent - 10
-        features = feature_engineers[i].get_features(state[i])
-        x[step_index] = features
-        y[step_index] = tf.keras.utils.to_categorical(actions[i], num_classes=N_CLASSES)
-    step_index += len(state[0]["alive"])
+        if step_index < database_size:
+            i = agent - 10
+            features = feature_engineers[i].get_features(state[i])
+            x[step_index] = features
+            y[step_index] = tf.keras.utils.to_categorical(actions[i], num_classes=N_CLASSES)
+            step_index += 1
