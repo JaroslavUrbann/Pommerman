@@ -9,13 +9,15 @@ from subprocess import check_output, call
 import time
 from threading import Thread
 from py4j.java_gateway import JavaGateway, GatewayParameters
-
+from pommerman import characters
+from pommerman.agents import BaseAgent
 verbose = False
 
 
-class HakoAgent:
+class HakoAgent(BaseAgent):
 
     def __init__(self, port):
+        super(HakoAgent, self).__init__(characters.Bomber)
         self.path = os.path.abspath("agents/hako/BBMServer" + str(port) + ".jar")
         self.server_thread = Thread(target=self.start_server, daemon=True)
         self.server_thread.start()
