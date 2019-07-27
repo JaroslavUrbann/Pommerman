@@ -4,7 +4,7 @@ from agents import hako_agent
 from pommerman.runner import DockerAgentRunner
 import subprocess
 from feature_engineer import FeatureEngineer
-from pretraining import pretraining_database
+from pretraining_LN import pretraining_database
 import time
 
 

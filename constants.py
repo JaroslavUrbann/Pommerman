@@ -11,6 +11,6 @@ AGENT = "agent"
 PLAYER_DECAY = 0.8
 BOMB = 3
 
-N_CLASSES = 7
+N_CLASSES = 6
 LR = 3e-4
 N_FEATURES = 14

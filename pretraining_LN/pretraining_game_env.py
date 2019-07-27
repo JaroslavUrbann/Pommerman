@@ -1,7 +1,7 @@
 import pommerman
-from pretraining import pretraining_database
+from pretraining_LN import pretraining_database
 import subprocess
-from pretraining.hako_agent import HakoAgent
+from pretraining_LN.hako_agent import HakoAgent
 from pommerman.agents import SimpleAgent
 import time
 

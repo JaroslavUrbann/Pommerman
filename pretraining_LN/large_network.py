@@ -3,7 +3,7 @@ from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, A
 from tensorflow.python.keras.regularizers import l2
 from constants import *
 import matplotlib.pyplot as plt
-from pretraining import pretraining_database
+from pretraining_LN import pretraining_database
 import pandas
 
 

@@ -36,12 +36,14 @@ def main():
         done = False
         while not done:
             i += 1
-            env.render()
+            # env.render()
             actions = env.act(state)
+            print(actions)
             state, reward, done, info = env.step(actions)
-            print(info["result"].value)
+            print(done)
+            # print(info["result"].value)
             # if i == 300:
-            #     break
+            # break
         print('Episode {} finished'.format(i_episode))
     env.close()
 
@@ -50,7 +52,10 @@ class TestAgent(BaseAgent):
     feature_engineer = FeatureEngineer()
 
     def act(self, observation, action_space):
-        self.feature_engineer.update_features(observation)
+        # print("...........................................................")
+        # print(observation)
+        # print("...........................................................")
+        # self.feature_engineer.update_features(observation)
         # print(sys.getsizeof(observation))
         # self.FeatureEngineer.make_features(observation)
         # time.sleep(0.5)

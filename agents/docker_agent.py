@@ -8,7 +8,7 @@ import docker
 from pommerman.agents import BaseAgent
 from pommerman import utility
 from pommerman import characters
-from pretraining import pretraining_database
+from pretraining_LN import pretraining_database
 from feature_engineer import FeatureEngineer
 
 

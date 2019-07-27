@@ -207,7 +207,7 @@ class FeatureEngineer:
         # just a fucking fog map
         self._fog_map = np.where(observation["board"] == FOG, 1, 0)
 
-    def update_features(self, observation):
+    def get_features(self, observation):
         self._update_materials_map(observation, self._wood_map, WOOD)
         self._update_materials_map(observation, self._stone_map, STONE)
         self._update_materials_map(observation, self._ammo_powerup_map, AMMO_POWERUP)
@@ -222,7 +222,6 @@ class FeatureEngineer:
         self._update_blast_strength_map()
         self._update_status_map(observation)
 
-    def get_features(self):
         self._features[:, :, 0] = self._wood_map
         self._features[:, :, 1] = self._stone_map
         self._features[:, :, 2] = self._ammo_powerup_map

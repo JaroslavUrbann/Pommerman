@@ -1,5 +1,5 @@
-from pretraining.large_network import LargeNetwork
-from pretraining import pretraining_game_env, pretraining_database
+from pretraining_LN.large_network import LargeNetwork
+from pretraining_LN import pretraining_game_env, pretraining_database
 from agents.LN_agent import LNAgent
 from testing.testing_game_env import test_network
 import gdrive_auth

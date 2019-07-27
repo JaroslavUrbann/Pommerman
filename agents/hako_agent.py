@@ -8,17 +8,14 @@ import array
 from subprocess import check_output, call
 import time
 from threading import Thread
-
-from pommerman.agents import BaseAgent
 from py4j.java_gateway import JavaGateway, GatewayParameters
 
 verbose = False
 
 
-class MyAgent:
+class HakoAgent:
 
-    def __init__(self, a_id):
-        port = 25335 + a_id
+    def __init__(self, port):
         self.path = os.path.abspath("agents/hako/BBMServer" + str(port) + ".jar")
         self.server_thread = Thread(target=self.start_server, daemon=True)
         self.server_thread.start()
