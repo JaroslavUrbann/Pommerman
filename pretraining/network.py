@@ -7,7 +7,7 @@ from pretraining import DB
 import pandas
 
 
-class LargeNetwork:
+class Network:
 
     def __init__(self, drive):
         self.name = None
