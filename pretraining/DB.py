@@ -7,7 +7,7 @@ database_size = 0
 step_index = 0
 
 x = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
-y = np.zeros((database_size, 1), dtype="float32")
+y = np.zeros((database_size, N_CLASSES), dtype="float32")
 feature_engineers = [None, None, None, None]
 
 
@@ -17,7 +17,7 @@ def create_database(db_size):
     database_size = db_size
     step_index = 0
     x = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
-    y = np.zeros((database_size, 1), dtype="float32")
+    y = np.zeros((database_size, N_CLASSES), dtype="float32")
     feature_engineers = [FeatureEngineer(), FeatureEngineer(), FeatureEngineer(), FeatureEngineer()]
 
 
