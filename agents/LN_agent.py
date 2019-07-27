@@ -9,9 +9,9 @@ class LNAgent(BaseAgent):
     def __init__(self, a_id, n_id, LN):
         super(LNAgent, self).__init__(characters.Bomber)
         self.feature_engineer = FeatureEngineer()
-        self.n_id = a_id
+        self.n_id = n_id
         self.LN_controller = get_controller(self.n_id, LN)
-        self.a_id = n_id
+        self.a_id = a_id
         self._steps = 0
         self.tim = 0
 
