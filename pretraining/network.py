@@ -124,7 +124,7 @@ class Network:
 
     def train_model_on_database(self, n_epochs):
         x, y = DB.get_database()
-        self.n_samples = y[0].shape[0]
+        self.n_samples = y.shape[0]
         self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 
@@ -138,11 +138,11 @@ class Network:
         df = pandas.read_csv(self.logs["title"])
 
         ax = plt.gca()
-        df.plot(kind='line', x='n_samples', y='val_agent_acc', ax=ax)
-        df.plot(kind='line', x='n_samples', y='agent_acc', ax=ax)
+        df.plot(kind='line', x='n_samples', y='val_acc', ax=ax)
+        df.plot(kind='line', x='n_samples', y='acc', ax=ax)
         plt.show()
 
         ax = plt.gca()
-        df.plot(kind='line', x='n_samples', y='val_agent_loss', ax=ax)
-        df.plot(kind='line', x='n_samples', y='agent_loss', ax=ax)
+        df.plot(kind='line', x='n_samples', y='val_loss', ax=ax)
+        df.plot(kind='line', x='n_samples', y='loss', ax=ax)
         plt.show()
