@@ -115,11 +115,35 @@ class Network:
         y = BatchNormalization()(y)
 
         y = Dense(16, activation="relu")(y)
-        y = Dense(N_CLASSES, activation='softmax', name="agent")(y)
+        y = Dense(N_CLASSES, activation='softmax', name="y")(y)
 
-        model = tf.keras.models.Model(inputs=x, outputs=y)
+        message = Conv2D(128, 1, padding="same", kernel_regularizer=l2(l2const))(layer)
+        message = Activation("relu")(message)
+        message = BatchNormalization()(message)
+        message = Flatten()(message)
+        message = Dense(1024, kernel_regularizer=l2(l2const))(message)
+        message = Activation("relu")(message)
+        message = BatchNormalization()(message)
+
+        message = Dense(512, kernel_regularizer=l2(l2const))(message)
+        message = Activation("relu")(message)
+        message = BatchNormalization()(message)
+
+        message = Dense(256, kernel_regularizer=l2(l2const))(message)
+        message = Activation("relu")(message)
+        message = BatchNormalization()(message)
+
+        message = Dense(64, kernel_regularizer=l2(l2const))(message)
+        message = Activation("relu")(message)
+        message = BatchNormalization()(message)
+
+        message = Dense(16, activation="relu")(message)
+        message = Dense(N_MESSAGE_BITS, activation='tanh', name="message")(message)
+
+        model = tf.keras.models.Model(inputs=x, outputs=[y, message])
         model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR),
-                      metrics=['accuracy'])
+                      metrics=['accuracy'],
+                      loss_weights=[1., 0.0])
         self.model = model
 
     def train_model_on_database(self, n_epochs):
