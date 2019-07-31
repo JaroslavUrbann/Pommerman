@@ -1,7 +1,6 @@
 import tensorflow as tf
 tf.enable_eager_execution()
 
-
 w = tf.Variable(2.0)
 tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
 
