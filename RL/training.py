@@ -3,6 +3,13 @@ from constants import *
 from feature_engineer import FeatureEngineer
 
 
+@tf.custom_gradient
+def half_grad(x):
+    def _grad(dy):
+        return dy * .5
+    return x, _grad
+
+
 class RLTraining:
 
     def __init__(self, model, message_model):
