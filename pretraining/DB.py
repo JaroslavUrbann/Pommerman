@@ -38,5 +38,5 @@ def add_data(state, actions):
             i = agent - 10
             features = feature_engineers[i].get_features(state[i])
             x[step_index] = features
-            y[step_index] = tf.keras.utils.to_categorical(actions[i], num_classes=N_CLASSES)
+            y[step_index] = actions[i]
             step_index += 1

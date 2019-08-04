@@ -141,7 +141,7 @@ class Network:
         message = Dense(N_MESSAGE_BITS, activation='tanh', name="message")(message)
 
         model = tf.keras.models.Model(inputs=x, outputs=[y, message])
-        model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR),
+        model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy(), optimizer=tf.keras.optimizers.Adam(lr=LR),
                       metrics=['accuracy'],
                       loss_weights=[1., 0.0])
         self.model = model
