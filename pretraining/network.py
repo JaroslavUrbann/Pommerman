@@ -149,7 +149,7 @@ class Network:
     def train_model_on_database(self, n_epochs):
         x, y = DB.get_database()
         self.n_samples = y.shape[0]
-        self.history = self.model.fit(x, [y, None], validation_split=0.1,
+        self.history = self.model.fit(x, y, validation_split=0.1,
                                       epochs=n_epochs).history
 
     def predict(self, x):
