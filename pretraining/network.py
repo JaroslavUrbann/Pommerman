@@ -162,7 +162,7 @@ class Network:
         df = pandas.read_csv(self.logs["title"])
 
         ax = plt.gca()
-        df.plot(kind='line', x='n_samples', y='y_val_acc', ax=ax)
+        df.plot(kind='line', x='n_samples', y='val_y_acc', ax=ax)
         df.plot(kind='line', x='n_samples', y='y_acc', ax=ax)
         plt.show()
 
