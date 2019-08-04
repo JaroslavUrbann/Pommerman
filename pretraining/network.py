@@ -141,15 +141,15 @@ class Network:
         message = Dense(N_MESSAGE_BITS, activation='tanh', name="message")(message)
 
         model = tf.keras.models.Model(inputs=x, outputs=[y, message])
-        model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy(), optimizer=tf.keras.optimizers.Adam(lr=LR),
+        model.compile(loss=[tf.keras.losses.SparseCategoricalCrossentropy(), None], optimizer=tf.keras.optimizers.Adam(lr=LR),
                       metrics=['accuracy'],
-                      loss_weights=[1., 0.0])
+                      loss_weights=[1., None])
         self.model = model
 
     def train_model_on_database(self, n_epochs):
         x, y = DB.get_database()
         self.n_samples = y.shape[0]
-        self.history = self.model.fit(x, y, validation_split=0.1,
+        self.history = self.model.fit(x, [y, None], validation_split=0.1,
                                       epochs=n_epochs).history
 
     def predict(self, x):
