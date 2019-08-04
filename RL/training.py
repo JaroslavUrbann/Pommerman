@@ -12,6 +12,7 @@ class RLTraining:
         self.feature_engineers = [FeatureEngineer() for _ in range(4)]
         self.messages = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
         self.next_messages = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
+        self.losses = [[] for _ in range(4)]
         self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy()
         with self.tape:
             self.tape.watch(self.model.trainable_variables)
