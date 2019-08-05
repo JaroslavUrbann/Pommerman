@@ -5,6 +5,7 @@ from constants import *
 import matplotlib.pyplot as plt
 from pretraining import DB
 import pandas
+import numpy as np
 
 
 class Network:
@@ -153,7 +154,7 @@ class Network:
                                       epochs=n_epochs).history
 
     def predict(self, x):
-        return self.model.predict(x)
+        return self.model.predict(np.expand_dims(x, axis=0))
 
     def plot_csv(self):
         plt.rcParams['figure.figsize'] = [15, 7]
