@@ -1,6 +1,5 @@
 import numpy as np
 from constants import *
-import tensorflow as tf
 from feature_engineer import FeatureEngineer
 
 database_size = 0

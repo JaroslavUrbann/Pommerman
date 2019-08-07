@@ -196,18 +196,19 @@ class FeatureEngineer:
 
             bombs.pop(0)
 
-    def _update_players_map(self, observation, map, player):
+    def _update_players_map(self, observation, player_map, player):
         # player maps are maps where the known position of a player is represented by "1" and all other board
         # values are discounted by PLAYER_DECAY every round no matter what
         # This is a controversial decision and these "historical values" might be turned off entirely in the future
-        map *= PLAYER_DECAY
+        player_map *= PLAYER_DECAY
         if player == AGENT:
-            map[observation["position"][0], observation["position"][1]] = 1
+            player_map = np.zeros(BOARD_SIZE)
+            player_map[observation["position"][0], observation["position"][1]] = 1
         if player == TEAMMATE:
-            map[observation["board"] == observation[TEAMMATE].value] = 1
+            player_map[observation["board"] == observation[TEAMMATE].value] = 1
         if player == ENEMIES:
-            map[observation["board"] == observation[ENEMIES][0].value] = 1
-            map[observation["board"] == observation[ENEMIES][1].value] = 1
+            player_map[observation["board"] == observation[ENEMIES][0].value] = 1
+            player_map[observation["board"] == observation[ENEMIES][1].value] = 1
 
     def _update_fog_map(self, observation):
         # just a fucking fog map
