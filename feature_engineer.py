@@ -202,7 +202,7 @@ class FeatureEngineer:
         # This is a controversial decision and these "historical values" might be turned off entirely in the future
         player_map *= PLAYER_DECAY
         if player == AGENT:
-            player_map = np.zeros(BOARD_SIZE)
+            # player_map = np.zeros(BOARD_SIZE)
             player_map[observation["position"][0], observation["position"][1]] = 1
         if player == TEAMMATE:
             player_map[observation["board"] == observation[TEAMMATE].value] = 1

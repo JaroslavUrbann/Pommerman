@@ -35,7 +35,7 @@ class MessageNetwork:
         self.name = name
         l2const = 1e-4
 
-        x = Input(shape=(3, 3, MESSAGE_HISTORY_LENGTH))
+        x = Input(shape=(3, 3, CHAT_HISTORY_LENGTH))
         layer = Conv2D(256, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(x)
         layer = Conv2D(256, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         layer = UpSampling2D(layer)
