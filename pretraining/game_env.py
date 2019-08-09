@@ -24,9 +24,9 @@ def fill_database():
         while not done:
             # env.render()
             actions = env.act(state)
-            state, reward, done, info = env.step(actions)
             DB.add_data(state, actions)
-            if state[0]['step_count'] > 75:
+            state, reward, done, info = env.step(actions)
+            if state[0]['step_count'] > 100:
                 break
         DB.next_episode()
         print("database items done: " + str(DB.step_index) + "/" + str(db_size))
