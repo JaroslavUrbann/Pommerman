@@ -15,37 +15,37 @@ def compute_loss(y):
 
 
 def add_message(message):
-    global messages
-    messages = messages[-1:] + messages[:-1]
-    messages[0] = [message]
+    global msgs
+    msgs = msgs[-1:] + msgs[:-1]
+    msgs[0] = [message]
 
 
-messages = [tf.Variable(tf.zeros((1,))) for _ in range(2)]
+msgs = [tf.Variable(tf.zeros((1,))) for _ in range(2)]
 loss = 0
 
 
 with tape:
     tape.watch(w)
 
-    y = nn(tf.concat(messages, 0))
+    y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
     add_message(y)
     print(tape.gradient(loss, w))
     del y
 
-    y = nn(tf.concat(messages, 0))
+    y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
     add_message(y)
     print(tape.gradient(loss, w))
     del y
 
-    y = nn(tf.concat(messages, 0))
+    y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
     add_message(y)
     print(tape.gradient(loss, w))
     del y
 
-    y = nn(tf.concat(messages, 0))
+    y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
     add_message(y)
     print(tape.gradient(loss, w))

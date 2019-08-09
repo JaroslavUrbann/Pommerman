@@ -4,7 +4,7 @@ from tensorflow.python.keras.regularizers import l2
 from constants import *
 
 
-class MessageNetwork:
+class ChatNetwork:
 
     def __init__(self, drive):
         self.name = None

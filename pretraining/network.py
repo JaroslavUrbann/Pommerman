@@ -171,3 +171,15 @@ class Network:
         df.plot(kind='line', x='n_samples', y='val_y_loss', ax=ax)
         df.plot(kind='line', x='n_samples', y='y_loss', ax=ax)
         plt.show()
+
+
+if __name__ == "__main__":
+    N = Network("")
+    N.init_model("")
+    grad_storage = N.model.trainable_variables
+    for i, grad in enumerate(grad_storage):
+        print(i, grad)
+        grad_storage[i] = grad * 0
+    print(len(N.model.trainable_variables))
+    print(len(grad_storage))
+    print(grad_storage)
