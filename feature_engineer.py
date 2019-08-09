@@ -166,6 +166,7 @@ class FeatureEngineer:
             row, col = bombs[0][0], bombs[0][1] + 1
             a = 0
             # while in the map and in range and not on a stone square and while the previous square wasn't wood
+            # right
             while col < BOARD_SIZE[1] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[
                 row, col - 1] != 1:
                 _check4bomb(row, col, bomb_life)
@@ -174,13 +175,15 @@ class FeatureEngineer:
 
             row, col = bombs[0][0], bombs[0][1] - 1
             a = 0
-            while col > 0 and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row, col + 1] != 1:
+            # left
+            while col >= 0 and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row, col + 1] != 1:
                 _check4bomb(row, col, bomb_life)
                 col -= 1
                 a += 1
 
             row, col = bombs[0][0] + 1, bombs[0][1]
             a = 0
+            # down
             while row < BOARD_SIZE[0] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[
                 row - 1, col] != 1:
                 _check4bomb(row, col, bomb_life)
@@ -189,7 +192,8 @@ class FeatureEngineer:
 
             row, col = bombs[0][0] - 1, bombs[0][1]
             a = 0
-            while row > 0 and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row + 1, col] != 1:
+            # up
+            while row >= 0 and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row + 1, col] != 1:
                 _check4bomb(row, col, bomb_life)
                 row -= 1
                 a += 1

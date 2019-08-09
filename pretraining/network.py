@@ -85,7 +85,7 @@ class Network:
         layer = Activation("relu")(layer)
         layer = BatchNormalization()(layer)
 
-        for _ in range(40):
+        for _ in range(10):
             res = layer
             layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
             layer = Activation("relu")(layer)
