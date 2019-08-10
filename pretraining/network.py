@@ -139,7 +139,7 @@ class Network:
         message = BatchNormalization()(message)
 
         message = Dense(16, activation="relu")(message)
-        message = Dense(N_MESSAGE_BITS, activation='tanh', name="message")(message)
+        message = Dense(N_MESSAGE_BITS, name="message")(message)
 
         model = tf.keras.models.Model(inputs=x, outputs=[y, message])
         model.compile(loss='sparse_categorical_crossentropy', optimizer=tf.keras.optimizers.Adam(lr=LR),

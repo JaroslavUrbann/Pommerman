@@ -88,7 +88,7 @@ class RLTraining:
     @tf.custom_gradient
     def half_grad(self, x):
         def _grad(dy):
-            return dy / CHAT_HISTORY_LENGTH  # dy * 0.5 / (CHL/2)
+            return 0.5 * dy / CHAT_HISTORY_LENGTH
 
         return x, _grad
 
@@ -108,6 +108,10 @@ class RLTraining:
             features = tf.concat([agent_features[:21], chat_features], 2)
             actions, msg = self.model(tf.expand_dims(features, 0))
 
+            # add noise and change to 0 - 1 distribution
+            msg += tf.random.normal(msg.shape, mean=0.0, stddev=10.0)
+            msg = tf.math.sigmoid(msg)
+
             # halve msg gradient
             m = self.half_grad(msg)
 
@@ -118,7 +122,8 @@ class RLTraining:
             self.next_msgs[id] = m_
 
             action = tf.math.argmax(actions)
-            loss = self.compute_loss([action], actions)
+            # / 2 is so that half the gradients for this timestep come from current action
+            loss = self.compute_loss([action], actions) / 2
 
             agent_grads = self.tape.gradient(loss, self.model.trainable_variables)
             chat_grads = self.tape.gradient(loss, self.chat_model.trainable_variables)
