@@ -4,31 +4,25 @@ import os
 import threading
 import requests
 import docker
-
 from pommerman.agents import BaseAgent
 from pommerman import utility
 from pommerman import characters
-from pretraining_LN import pretraining_database
-from feature_engineer import FeatureEngineer
 
 
-# Docker doesn't work in Google Colab, leaving this for now
 class DockerAgent(BaseAgent):
     """The Docker Agent that Connects to a Docker container where the character runs."""
 
     def __init__(self,
                  docker_image,
                  port,
-                 id,
                  server='http://localhost',
                  character=characters.Bomber,
                  docker_client=None,
                  env_vars=None):
         super(DockerAgent, self).__init__(character)
 
-        self.feature_engineer = FeatureEngineer()
-        self.id = id
-
+        self.t = 0
+        self.s = 0
         self._docker_image = docker_image
         self._docker_client = docker_client
         if not self._docker_client:
@@ -129,6 +123,7 @@ class DockerAgent(BaseAgent):
             print('Timeout in init_agent()!')
 
     def act(self, obs, action_space):
+        tim = time.time()
         obs_serialized = json.dumps(obs, cls=utility.PommermanJSONEncoder)
         request_url = "http://localhost:{}/action".format(self._port)
         try:
@@ -145,16 +140,11 @@ class DockerAgent(BaseAgent):
         except requests.exceptions.Timeout as e:
             print('Timeout!', flush=True)
             action = 0
-
-        if self.id == 1 or self.id == 2:
-            self.feature_engineer.update_features(obs)
-            features = self.feature_engineer.get_features()
-            pretraining_database.add_data(features, action, self.id)
-
+        self.t = (self.t * self.s + (time.time() - tim)) / (self.s + 1)
+        self.s += 1
         return action
 
     def episode_end(self, reward):
-        self.feature_engineer = FeatureEngineer()
         request_url = "http://localhost:{}/episode_end".format(self._port)
         try:
             req = requests.post(
@@ -166,21 +156,21 @@ class DockerAgent(BaseAgent):
         except requests.exceptions.Timeout as e:
             print('Timeout in episode_end()!')
 
-    # def shutdown(self):
-        # if self.id == 0:
-        #     subprocess.call('docker kill $(docker ps -q)', shell=True)
-        # request_url = "http://localhost:{}/shutdown".format(self._port)
-        # try:
-        #     req = requests.post(
-        #         request_url,
-        #         timeout=5,
-        #         json={})
-        # except requests.exceptions.Timeout as e:
-        #     print('Timeout in shutdown()!')
-        #
-        # print("Stopping container..")
-        # if self._container:
-        #     try:
-        #         return self._container.remove(force=True)
-        #     except docker.errors.NotFound as e:
-        #         return True
+    def shutdown(self):
+        # subprocess.call('docker kill $(docker ps -q)', shell=True)
+        request_url = "http://localhost:{}/shutdown".format(self._port)
+        try:
+            req = requests.post(
+                request_url,
+                timeout=5,
+                json={})
+        except requests.exceptions.Timeout as e:
+            print('Timeout in shutdown()!')
+
+        print("Stopping container..")
+        print(self.t, self.s)
+        if self._container:
+            try:
+                return self._container.remove(force=True)
+            except docker.errors.NotFound as e:
+                return True

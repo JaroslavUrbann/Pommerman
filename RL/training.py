@@ -45,7 +45,7 @@ class RLTraining:
             new_avg = (self.chats_grads[id][m] * (total_discount - 1) + chat_grads[m]) / total_discount
             self.chats_grads[id][m] = new_avg
 
-    # died_first needs to have at most 1 player from each team
+    # died_first should ideally have at most 1 player from each team
     def apply_grads(self, won, died_first):
         # 0.7 if it won but died, -0.7 if lost but didn't die first, else -1/1
         rewards = [(0.7 if a in died_first else 1) if a in won else -1 if a in died_first else -0.7 for a in range(4)]
@@ -113,19 +113,21 @@ class RLTraining:
             msg = tf.math.sigmoid(msg)
 
             # halve msg gradient
-            m = self.half_grad(msg)
+            msg = self.half_grad(msg)
 
             # reshape msg and add it to stack
-            msg = tf.reshape(m, (1, 2, 3, 1))
+            msg = tf.reshape(msg, (1, 2, 3, 1))
             padding = tf.zeros((1, 1, 3, 1))
-            m_ = tf.concat[msg, padding]
-            self.next_msgs[id] = m_
+            msg = tf.concat[msg, padding]
+            self.next_msgs[id] = msg
 
             action = tf.math.argmax(actions)
-            # / 2 is so that half the gradients for this timestep come from current action
-            loss = self.compute_loss([action], actions) / 2
+        # / 2 is so that half the gradients for this timestep come from current action
+        loss = self.compute_loss([action], actions) / 2
 
-            agent_grads = self.tape.gradient(loss, self.model.trainable_variables)
-            chat_grads = self.tape.gradient(loss, self.chat_model.trainable_variables)
+        agent_grads = self.tape.gradient(loss, self.model.trainable_variables)
+        chat_grads = self.tape.gradient(loss, self.chat_model.trainable_variables)
 
-            self.add_grads(agent_grads, chat_grads, id, int(observation["step_count"]))
+        self.add_grads(agent_grads, chat_grads, id, int(observation["step_count"]))
+
+        return action

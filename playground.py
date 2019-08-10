@@ -3,6 +3,8 @@ from pommerman import agents
 # import matplotlib.pyplot as plt
 from pommerman.agents import BaseAgent
 from feature_engineer import FeatureEngineer
+from agents.docker_agent import DockerAgent
+import time
 
 
 def main():
@@ -14,23 +16,27 @@ def main():
 
     # Create a set of agents (exactly four)
     agent_list = [
-        agents.SimpleAgent(),
-        agents.SimpleAgent(),
-        agents.SimpleAgent(),
+        # agents.SimpleAgent(),
+        # DockerAgent("multiagentlearning/navocado", port=80),
+        # agents.SimpleAgent(),
+        # agents.SimpleAgent(),
         # DockerAgent("multiagentlearning/hakozakijunctions", 80)
         TestAgent(),
-        # TestAgent(),
-        # TestAgent(),
+        TestAgent(),
+        TestAgent(),
+        TestAgent(),
         # agents.RandomAgent(),
         # agents.RandomAgent(),
         # agents.PlayerAgent(agent_control="arrows")
-        # agents.DockerAgent("pommerman/simple-agent", port=12345),
+        # DockerAgent("multiagentlearning/navocado", port=81),
     ]
-    # Make the "Free-For-All" environment using the agent list
-    env = pommerman.make('PommeRadioCompetition-v2', agent_list)
+
+    # env = pommerman.make('PommeRadioCompetition-v2', agent_list)
+    env = pommerman.make('PommeTeamCompetition-v1', agent_list)
 
     # Run the episodes just like OpenAI Gym
     i = 0
+    tim = time.time()
     for i_episode in range(1):
         state = env.reset()
         done = False
@@ -38,14 +44,17 @@ def main():
             i += 1
             # env.render()
             actions = env.act(state)
-            print(actions)
+            # print(actions)
             state, reward, done, info = env.step(actions)
-            print(done)
+            # print(done)
             # print(info["result"].value)
             # if i == 300:
             # break
+            # print(info)
+            # break
         print('Episode {} finished'.format(i_episode))
     env.close()
+    print(time.time() - tim)
 
 
 class TestAgent(BaseAgent):
