@@ -132,4 +132,4 @@ class RLTraining:
 
         self.add_grads(agent_grads, chat_grads, id, step)
 
-        return int(action.numpy())
+        return action
