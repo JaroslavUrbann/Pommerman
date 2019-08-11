@@ -108,7 +108,7 @@ class RLTraining:
             chat_features = self.chat_model(chat)
 
             features = tf.concat([agent_features[:21], chat_features], 2)
-            actions, msg = self.model(tf.expand_dims(features, 0))
+            actions, msg = self.model(features)
 
             # add noise and change to 0 - 1 distribution
             msg += tf.random.normal(msg.shape, mean=0.0, stddev=10.0)

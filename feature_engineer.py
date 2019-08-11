@@ -30,7 +30,7 @@ class FeatureEngineer:
     _blast3_map = np.zeros(BOARD_SIZE)
     _kick_map = np.zeros(BOARD_SIZE)
 
-    _features = np.zeros((BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES))
+    _features = np.zeros((1, BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES))
 
     # _agent_number = 0
     #
@@ -233,30 +233,30 @@ class FeatureEngineer:
         self._update_blast_strength_map()
         self._update_status_maps(observation)
 
-        self._features[:, :, 0] = self._wood_map
-        self._features[:, :, 1] = self._stone_map
-        self._features[:, :, 2] = self._ammo_powerup_map
-        self._features[:, :, 3] = self._range_powerup_map
-        self._features[:, :, 4] = self._kick_powerup_map
-        self._features[:, :, 5] = self._enemies_map
-        self._features[:, :, 6] = self._teammate_map
-        self._features[:, :, 7] = self._agent_map
-        self._features[:, :, 8] = self._fog_map
-        self._features[:, :, 9] = self._bomb_map
-        self._features[:, :, 10] = self._bomb_history_map
-        self._features[:, :, 11] = self._flame_map
-        self._features[:, :, 12] = self._blast_strength_map
-        self._features[:, :, 13] = self._ammo1_map
-        self._features[:, :, 14] = self._ammo2_map
-        self._features[:, :, 15] = self._ammo3_map
-        self._features[:, :, 16] = self._ammo4_map
-        self._features[:, :, 17] = self._blast1_map
-        self._features[:, :, 18] = self._blast2_map
-        self._features[:, :, 19] = self._blast3_map
-        self._features[:, :, 20] = self._kick_map
-        self._features[:, :, 21] = np.zeros(BOARD_SIZE)
-        self._features[:, :, 22] = np.zeros(BOARD_SIZE)
-        self._features[:, :, 23] = np.zeros(BOARD_SIZE)
-        self._features[:, :, 24] = np.zeros(BOARD_SIZE)
+        self._features[:, :, :, 0] = self._wood_map
+        self._features[:, :, :, 1] = self._stone_map
+        self._features[:, :, :, 2] = self._ammo_powerup_map
+        self._features[:, :, :, 3] = self._range_powerup_map
+        self._features[:, :, :, 4] = self._kick_powerup_map
+        self._features[:, :, :, 5] = self._enemies_map
+        self._features[:, :, :, 6] = self._teammate_map
+        self._features[:, :, :, 7] = self._agent_map
+        self._features[:, :, :, 8] = self._fog_map
+        self._features[:, :, :, 9] = self._bomb_map
+        self._features[:, :, :, 10] = self._bomb_history_map
+        self._features[:, :, :, 11] = self._flame_map
+        self._features[:, :, :, 12] = self._blast_strength_map
+        self._features[:, :, :, 13] = self._ammo1_map
+        self._features[:, :, :, 14] = self._ammo2_map
+        self._features[:, :, :, 15] = self._ammo3_map
+        self._features[:, :, :, 16] = self._ammo4_map
+        self._features[:, :, :, 17] = self._blast1_map
+        self._features[:, :, :, 18] = self._blast2_map
+        self._features[:, :, :, 19] = self._blast3_map
+        self._features[:, :, :, 20] = self._kick_map
+        self._features[:, :, :, 21] = np.zeros(BOARD_SIZE)
+        self._features[:, :, :, 22] = np.zeros(BOARD_SIZE)
+        self._features[:, :, :, 23] = np.zeros(BOARD_SIZE)
+        self._features[:, :, :, 24] = np.zeros(BOARD_SIZE)
 
         return self._features
