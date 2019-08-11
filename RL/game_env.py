@@ -55,5 +55,4 @@ class NetworkAgent(BaseAgent):
         self.a_id = id
 
     def act(self, observation, action_space):
-        return self.RL(observation, self.a_id), 0, 0
-
+        return self.RL.training_step(observation, self.a_id), 0, 0

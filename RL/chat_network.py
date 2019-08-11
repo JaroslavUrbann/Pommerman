@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, Activation, BatchNormalization, UpSampling2D
+from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, Activation, BatchNormalization, UpSampling2D, Cropping2D
 from tensorflow.python.keras.regularizers import l2
 from constants import *
 
@@ -40,7 +40,8 @@ class ChatNetwork:
         layer = Conv2D(128, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         layer = Conv2D(128, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         layer = UpSampling2D()(layer)
-        layer = Conv2D(64, 3, padding="valid", activation="relu", kernel_regularizer=l2(l2const))(layer)
+        layer = Cropping2D(cropping=((0, 1), (0, 1)))(layer)
+        layer = Conv2D(64, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         layer = Conv2D(16, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         y = Conv2D(4, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
 

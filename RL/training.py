@@ -94,7 +94,6 @@ class RLTraining:
 
         return x, _grad
 
-    @tf.function
     def training_step(self, observation, id):
         with self.tape:
             # get features where last few layers are 0s representing chat features
