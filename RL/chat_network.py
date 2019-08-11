@@ -6,15 +6,14 @@ from constants import *
 
 class ChatNetwork:
 
-    def __init__(self, drive):
-        self.name = None
-        self.model_id = None
+    def __init__(self, drive, name=None, model_id=None):
+        self.name = name
+        self.model_id = model_id
         self.weights = None
         self.model = None
         self.drive = drive
 
-    def load_model(self, model_id):
-        self.model_id = model_id
+    def load_model(self):
         self.weights = self.drive.CreateFile({'id': self.model_id})
         self.weights.GetContentFile(self.weights["title"])
         self.model = tf.keras.models.load_model(self.weights["title"])
@@ -31,8 +30,7 @@ class ChatNetwork:
             self.weights.SetContentFile(self.weights["title"])
             self.weights.Upload()
 
-    def init_model(self, name):
-        self.name = name
+    def init_model(self):
         l2const = 1e-4
 
         x = Input(shape=(3, 3, CHAT_HISTORY_LENGTH))
