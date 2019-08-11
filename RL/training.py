@@ -2,6 +2,8 @@ import tensorflow as tf
 from constants import *
 from feature_engineer import FeatureEngineer
 
+tf.enable_eager_execution()
+
 
 class RLTraining:
 
@@ -35,7 +37,7 @@ class RLTraining:
 
     def add_grads(self, agent_grads, chat_grads, id, step):
         # equation for first n elements of a geometric sequence
-        total_discount = (1 - GRADIENT_DISCOUNT**(step + 1)) / (1 - GRADIENT_DISCOUNT)
+        total_discount = (1 - GRADIENT_DISCOUNT ** (step + 1)) / (1 - GRADIENT_DISCOUNT)
         for a in range(len(self.agents_grads[0])):
             new_avg = (self.agents_grads[id][a] * (total_discount - 1) + agent_grads[a]) / total_discount
             self.agents_grads[id][a] = new_avg
@@ -92,6 +94,7 @@ class RLTraining:
 
         return x, _grad
 
+    @tf.function
     def training_step(self, observation, id):
         with self.tape:
             # get features where last few layers are 0s representing chat features

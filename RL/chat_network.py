@@ -36,10 +36,10 @@ class ChatNetwork:
         x = Input(shape=(3, 3, CHAT_HISTORY_LENGTH))
         layer = Conv2D(256, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(x)
         layer = Conv2D(256, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
-        layer = UpSampling2D(layer)
+        layer = UpSampling2D()(layer)
         layer = Conv2D(128, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         layer = Conv2D(128, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
-        layer = UpSampling2D(layer)
+        layer = UpSampling2D()(layer)
         layer = Conv2D(64, 3, padding="valid", activation="relu", kernel_regularizer=l2(l2const))(layer)
         layer = Conv2D(16, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
         y = Conv2D(4, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
@@ -49,3 +49,6 @@ class ChatNetwork:
 
     def predict(self, x):
         return self.model(x)
+
+N = ChatNetwork("")
+N.init_model()
