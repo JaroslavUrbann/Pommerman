@@ -30,7 +30,7 @@ class FeatureEngineer:
     _blast3_map = np.zeros(BOARD_SIZE)
     _kick_map = np.zeros(BOARD_SIZE)
 
-    _features = np.zeros((1, BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES))
+    _features = np.zeros((1, BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES), dtype="float32")
 
     # _agent_number = 0
     #
