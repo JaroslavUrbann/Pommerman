@@ -1,6 +1,6 @@
 import tensorflow as tf
 from constants import *
-from feature_engineer import FeatureEngineer
+# from feature_engineer import FeatureEngineer
 
 tf.enable_eager_execution()
 
@@ -21,7 +21,7 @@ class RLTraining:
         self.agents_grads = [model.trainable_variables for _ in range(4)]
         self.chats_grads = [chat_model.trainable_variables for _ in range(4)]
         self.tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
-        self.feature_engineers = [FeatureEngineer() for _ in range(4)]
+        # self.feature_engineers = [FeatureEngineer() for _ in range(4)]
         self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
         self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy()
@@ -81,7 +81,7 @@ class RLTraining:
         if won:
             self.apply_grads(won, died_first)
         self.reset_grads()
-        self.feature_engineers = [FeatureEngineer() for _ in range(4)]
+        # self.feature_engineers = [FeatureEngineer() for _ in range(4)]
         self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
         self.tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
@@ -97,12 +97,9 @@ class RLTraining:
             self.chats[c][1] = self.next_msgs[c + 2]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
 
-    def training_step(self, observation, id):
+    @tf.function
+    def training_step(self, agent_features, id, step):
         with self.tape:
-            # get features where last few layers are 0s representing chat features
-            FE = self.feature_engineers[id]
-            agent_features = FE.get_features(observation)
-
             # takes chat conversation
             chat = self.chats[id % 2]
             chat = tf.concat(chat, 3)
@@ -133,6 +130,6 @@ class RLTraining:
         agent_grads = self.tape.gradient(loss, self.model.trainable_variables)
         chat_grads = self.tape.gradient(loss, self.chat_model.trainable_variables)
 
-        self.add_grads(agent_grads, chat_grads, id, int(observation["step_count"]))
+        self.add_grads(agent_grads, chat_grads, id, step)
 
         return int(action.numpy())

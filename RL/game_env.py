@@ -1,7 +1,5 @@
 import pommerman
-from pretraining import DB
-from agents.hako_agent import HakoAgent
-from pommerman.agents import SimpleAgent
+from feature_engineer import FeatureEngineer
 from pommerman.agents import BaseAgent
 from pommerman import characters
 from RL.training import RLTraining
@@ -52,7 +50,12 @@ class NetworkAgent(BaseAgent):
     def __init__(self, RL, id):
         super(NetworkAgent, self).__init__(characters.Bomber)
         self.RL = RL
+        self.feature_engineer = FeatureEngineer()
         self.a_id = id
 
     def act(self, observation, action_space):
-        return self.RL.training_step(observation, self.a_id), 0, 0
+        features = self.feature_engineer.get_features(observation)
+        return self.RL.training_step(features, self.a_id, int(observation["step_count"])), 0, 0
+
+    def episode_end(self, reward):
+        self.feature_engineer = FeatureEngineer()
