@@ -5,6 +5,14 @@ from feature_engineer import FeatureEngineer
 tf.enable_eager_execution()
 
 
+@tf.custom_gradient
+def half_grad(x):
+    def _grad(dy):
+        return 0.5 * dy / CHAT_HISTORY_LENGTH
+
+    return x, _grad
+
+
 class RLTraining:
 
     def __init__(self, model, chat_model):
@@ -39,6 +47,8 @@ class RLTraining:
         # equation for first n elements of a geometric sequence
         total_discount = (1 - GRADIENT_DISCOUNT ** (step + 1)) / (1 - GRADIENT_DISCOUNT)
         for a in range(len(self.agents_grads[0])):
+            if agent_grads[a] is None:
+                continue
             new_avg = (self.agents_grads[id][a] * (total_discount - 1) + agent_grads[a]) / total_discount
             self.agents_grads[id][a] = new_avg
 
@@ -81,18 +91,11 @@ class RLTraining:
 
     # exchanges messages, is needed because some agents might be dead and can't add theirs to the chat
     def next_time_step(self):
-        for i in range(2):
-            self.chats[i] = self.chats[i][-2:] + self.chats[i][:-2]
-            self.chats[i][0] = [self.next_msgs[i]]
-            self.chats[i][1] = [self.next_msgs[i + 2]]
+        for c in range(2):
+            self.chats[c] = self.chats[c][-2:] + self.chats[c][:-2]
+            self.chats[c][0] = self.next_msgs[c]
+            self.chats[c][1] = self.next_msgs[c + 2]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
-
-    @tf.custom_gradient
-    def half_grad(self, x):
-        def _grad(dy):
-            return 0.5 * dy / CHAT_HISTORY_LENGTH
-
-        return x, _grad
 
     def training_step(self, observation, id):
         with self.tape:
@@ -107,7 +110,7 @@ class RLTraining:
             # gets chat features to put in his network
             chat_features = self.chat_model(chat)
 
-            features = tf.concat([agent_features[:21], chat_features], 2)
+            features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
             actions, msg = self.model(features)
 
             # add noise and change to 0 - 1 distribution
@@ -115,21 +118,21 @@ class RLTraining:
             msg = tf.math.sigmoid(msg)
 
             # halve msg gradient
-            msg = self.half_grad(msg)
+            msg = half_grad(msg)
 
             # reshape msg and add it to stack
             msg = tf.reshape(msg, (1, 2, 3, 1))
             padding = tf.zeros((1, 1, 3, 1))
-            msg = tf.concat[msg, padding]
+            msg = tf.concat([msg, padding], 1)
             self.next_msgs[id] = msg
 
-            action = tf.math.argmax(actions)
-        # / 2 is so that half the gradients for this timestep come from current action
-        loss = self.compute_loss([action], actions) / 2
+            action = tf.math.argmax(actions[0])
+            # / 2 is so that half the gradients for this timestep come from current action
+            loss = self.compute_loss([action], actions[0]) / 2
 
         agent_grads = self.tape.gradient(loss, self.model.trainable_variables)
         chat_grads = self.tape.gradient(loss, self.chat_model.trainable_variables)
 
         self.add_grads(agent_grads, chat_grads, id, int(observation["step_count"]))
 
-        return action
+        return int(action.numpy())

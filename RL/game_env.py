@@ -40,7 +40,7 @@ def train_network(model, chat_model, n_steps):
             state, reward, done, info = env.step(actions)
         n_episodes += 1
         RL.end_episode(died_first, info["winners"] if not info["result"] else [])
-        print(info["result"])
+        print(info)
     env.close()
     print("----------------------------------------------------------------------------------------------")
     print("RL training done in: " + str(time.time() - tim) + " n_episodes: " + str(n_episodes) + " n_steps: " + str(step))
