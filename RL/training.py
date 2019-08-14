@@ -1,14 +1,25 @@
 import tensorflow as tf
 from constants import *
-# from feature_engineer import FeatureEngineer
+import time
 
 tf.enable_eager_execution()
 
 
 @tf.custom_gradient
-def half_grad(x):
+def regulate_grad(x):
     def _grad(dy):
-        return 0.5 * dy / CHAT_HISTORY_LENGTH
+        abs_grads = tf.abs(dy)
+        grads = tf.reduce_sum(abs_grads, [0, 1, 2])
+        _, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
+
+        avg_all = tf.reduce_sum(grads, axis=0) / CHAT_HISTORY_LENGTH / 6
+        avg_biggest = tf.reduce_sum(_, axis=0) / N_BP_MESSAGES / 6
+        print(avg_all, avg_biggest)
+
+        new_grads = tf.zeros_like(dy)
+        for i in range(N_BP_MESSAGES):
+            new_grads[:, :, :, indexes[i]] = dy[:, :, :, indexes[i]] * 0.5 / N_BP_MESSAGES
+        return new_grads
 
     return x, _grad
 
@@ -21,8 +32,7 @@ class RLTraining:
         self.agents_grads = [model.trainable_variables for _ in range(4)]
         self.chats_grads = [chat_model.trainable_variables for _ in range(4)]
         self.tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
-        # self.feature_engineers = [FeatureEngineer() for _ in range(4)]
-        self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
+        self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(4)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
         self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy()
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=LR)
@@ -67,7 +77,7 @@ class RLTraining:
             grads_agent_2 = self.agents_grads[2][var] * rewards[2]
             grads_agent_3 = self.agents_grads[3][var] * rewards[3]
             self.agents_grads[0][var] = (grads_agent_0 + grads_agent_1 + grads_agent_2 + grads_agent_3) / 4
-        self.optimizer.apply_grads(zip(self.agents_grads[0], self.model.trainable_variables))
+        self.optimizer.apply_gradients(zip(self.agents_grads[0], self.model.trainable_variables))
 
         for var in range(len(self.chats_grads[0])):
             grads_msgs_0 = self.chats_grads[0][var] * rewards[0]
@@ -75,13 +85,12 @@ class RLTraining:
             grads_msgs_2 = self.chats_grads[2][var] * rewards[2]
             grads_msgs_3 = self.chats_grads[3][var] * rewards[3]
             self.chats_grads[0][var] = (grads_msgs_0 + grads_msgs_1 + grads_msgs_2 + grads_msgs_3) / 4
-        self.optimizer.apply_grads(zip(self.chats_grads[0], self.chat_model.trainable_variables))
+        self.optimizer.apply_gradients(zip(self.chats_grads[0], self.chat_model.trainable_variables))
 
     def end_episode(self, won, died_first):
         if won:
             self.apply_grads(won, died_first)
         self.reset_grads()
-        # self.feature_engineers = [FeatureEngineer() for _ in range(4)]
         self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
         self.tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
@@ -91,31 +100,33 @@ class RLTraining:
 
     # exchanges messages, is needed because some agents might be dead and can't add theirs to the chat
     def next_time_step(self):
-        for c in range(2):
+        for c in range(4):
             self.chats[c] = self.chats[c][-2:] + self.chats[c][:-2]
             self.chats[c][0] = self.next_msgs[c]
-            self.chats[c][1] = self.next_msgs[c + 2]
+            self.chats[c][1] = self.next_msgs[(c + 2) % 4]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
 
-    @tf.function
     def training_step(self, agent_features, id, step):
         with self.tape:
+            tim = time.time()
             # takes chat conversation
-            chat = self.chats[id % 2]
-            chat = tf.concat(chat, 3)
+            chat = tf.concat(self.chats[id], 3)
+            chat = regulate_grad(chat)
 
             # gets chat features to put in his network
             chat_features = self.chat_model(chat)
 
             features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
-            actions, msg = self.model(features)
+            a = time.time() - tim
 
+            tim = time.time()
+            actions, msg = self.model(features)
+            b = time.time() - tim
+
+            tim = time.time()
             # add noise and change to 0 - 1 distribution
             msg += tf.random.normal(msg.shape, mean=0.0, stddev=10.0)
             msg = tf.math.sigmoid(msg)
-
-            # halve msg gradient
-            msg = half_grad(msg)
 
             # reshape msg and add it to stack
             msg = tf.reshape(msg, (1, 2, 3, 1))
@@ -126,10 +137,17 @@ class RLTraining:
             action = tf.math.argmax(actions[0])
             # / 2 is so that half the gradients for this timestep come from current action
             loss = self.compute_loss([action], actions[0]) / 2
+            c = time.time() - tim
 
-        agent_grads = self.tape.gradient(loss, self.model.trainable_variables)
-        chat_grads = self.tape.gradient(loss, self.chat_model.trainable_variables)
+        tim = time.time()
+        agent_grads, chat_grads = self.tape.gradient(loss, [self.model.trainable_variables, self.chat_model.trainable_variables])
+        d = time.time() - tim
 
+        tim = time.time()
         self.add_grads(agent_grads, chat_grads, id, step)
+        e = time.time() - tim
+        print("features + message prediction: " + str(a) + " model prediction: " + str(
+            b) + " msg shaping + loss predicting: " + str(c) + " gradient calculating: " + str(
+            d) + " gradient adding: " + str(e))
 
         return action

@@ -22,7 +22,7 @@ def add_message(message):
 
 msgs = [tf.Variable(tf.zeros((1,))) for _ in range(2)]
 loss = 0
-
+adf = tf.Variable(tf.zeros((2,)))
 
 with tape:
     tape.watch(w)
@@ -48,5 +48,8 @@ with tape:
     y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
     add_message(y)
-    print(tape.gradient(loss, w))
+    adf = tf.concat([[loss], adf[:1]], axis=0)
+    adf = tf.concat([[w], adf[:1]], axis=0)
+    print(adf.shape)
+    print(tape.gradient(adf[1], w))
     del y

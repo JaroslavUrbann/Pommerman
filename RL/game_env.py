@@ -55,7 +55,7 @@ class NetworkAgent(BaseAgent):
 
     def act(self, observation, action_space):
         features = self.feature_engineer.get_features(observation)
-        action = int(self.RL.training_step(features, self.a_id, int(observation["step_count"])).numpy)
+        action = self.RL.training_step(features, self.a_id, int(observation["step_count"])).numpy()
         return action, 0, 0
 
     def episode_end(self, reward):
