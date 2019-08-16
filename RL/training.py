@@ -17,10 +17,10 @@ def regulate_grad(x):
         avg_biggest = tf.reduce_sum(_, axis=0) / N_BP_MESSAGES / 6
         print(avg_all, avg_biggest)
 
-        new_grads = tf.zeros_like(dy)
+        new_grads = tf.Variable(tf.zeros_like(dy))
         for i in range(N_BP_MESSAGES):
             new_grads[:, :, :, indexes[i]].assign(dy[:, :, :, indexes[i]] * 0.5 / N_BP_MESSAGES)
-        return new_grads
+        return tf.convert_to_tensor(new_grads, dtype="float32")
 
     return x, _grad
 
