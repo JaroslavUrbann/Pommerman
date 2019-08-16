@@ -1,5 +1,6 @@
 import tensorflow as tf
 from constants import *
+from contextlib import ExitStack
 import time
 
 tf.enable_eager_execution()
@@ -18,7 +19,7 @@ def regulate_grad(x):
 
         new_grads = tf.zeros_like(dy)
         for i in range(N_BP_MESSAGES):
-            new_grads[:, :, :, indexes[i]] = dy[:, :, :, indexes[i]] * 0.5 / N_BP_MESSAGES
+            new_grads[:, :, :, indexes[i]].assign(dy[:, :, :, indexes[i]] * 0.5 / N_BP_MESSAGES)
         return new_grads
 
     return x, _grad
@@ -31,15 +32,16 @@ class RLTraining:
         self.chat_model = chat_model
         self.agents_grads = [model.trainable_variables for _ in range(4)]
         self.chats_grads = [chat_model.trainable_variables for _ in range(4)]
-        self.tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
+        tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
+        with tape:
+            tape.watch(model.trainable_variables)
+            tape.watch(chat_model.trainable_variables)
+        self.tapes = [tape]
         self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(4)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
         self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy()
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=LR)
         self.reset_grads()
-        with self.tape:
-            self.tape.watch(model.trainable_variables)
-            self.tape.watch(chat_model.trainable_variables)
 
     def reset_grads(self):
         for i in range(len(self.agents_grads[0])):
@@ -93,10 +95,13 @@ class RLTraining:
         self.reset_grads()
         self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
-        self.tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
-        with self.tape:
-            self.tape.watch(self.model.trainable_variables)
-            self.tape.watch(self.chat_model.trainable_variables)
+        new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
+        with new_tape:
+            new_tape.watch(self.model.trainable_variables)
+            new_tape.watch(self.chat_model.trainable_variables)
+        self.tapes.append(new_tape)
+        if len(self.tapes) > N_TAPES:
+            del self.tapes[0]
 
     # exchanges messages, is needed because some agents might be dead and can't add theirs to the chat
     def next_time_step(self):
@@ -107,7 +112,10 @@ class RLTraining:
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
 
     def training_step(self, agent_features, id, step):
-        with self.tape:
+        with ExitStack() as stack:
+            for t in self.tapes:
+                stack.enter_context(t)
+
             tim = time.time()
             # takes chat conversation
             chat = tf.concat(self.chats[id], 3)
@@ -140,7 +148,7 @@ class RLTraining:
             c = time.time() - tim
 
         tim = time.time()
-        agent_grads, chat_grads = self.tape.gradient(loss, [self.model.trainable_variables, self.chat_model.trainable_variables])
+        agent_grads, chat_grads = self.tapes[0].gradient(loss, [self.model.trainable_variables, self.chat_model.trainable_variables])
         d = time.time() - tim
 
         tim = time.time()
