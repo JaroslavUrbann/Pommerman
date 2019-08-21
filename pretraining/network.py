@@ -82,7 +82,7 @@ class Network:
         layer = Activation("relu")(layer)
         layer = BatchNormalization()(layer)
 
-        for _ in range(10):
+        for _ in range(5):
             res = layer
             layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
             layer = Activation("relu")(layer)
@@ -96,10 +96,6 @@ class Network:
         y = Activation("relu")(y)
         y = BatchNormalization()(y)
         y = Flatten()(y)
-        y = Dense(1024, kernel_regularizer=l2(l2const))(y)
-        y = Activation("relu")(y)
-        y = BatchNormalization()(y)
-
         y = Dense(512, kernel_regularizer=l2(l2const))(y)
         y = Activation("relu")(y)
         y = BatchNormalization()(y)
@@ -108,7 +104,11 @@ class Network:
         y = Activation("relu")(y)
         y = BatchNormalization()(y)
 
-        y = Dense(64, kernel_regularizer=l2(l2const))(y)
+        y = Dense(128, kernel_regularizer=l2(l2const))(y)
+        y = Activation("relu")(y)
+        y = BatchNormalization()(y)
+
+        y = Dense(32, kernel_regularizer=l2(l2const))(y)
         y = Activation("relu")(y)
         y = BatchNormalization()(y)
 
@@ -119,10 +119,6 @@ class Network:
         message = Activation("relu")(message)
         message = BatchNormalization()(message)
         message = Flatten()(message)
-        message = Dense(1024, kernel_regularizer=l2(l2const))(message)
-        message = Activation("relu")(message)
-        message = BatchNormalization()(message)
-
         message = Dense(512, kernel_regularizer=l2(l2const))(message)
         message = Activation("relu")(message)
         message = BatchNormalization()(message)
@@ -131,7 +127,11 @@ class Network:
         message = Activation("relu")(message)
         message = BatchNormalization()(message)
 
-        message = Dense(64, kernel_regularizer=l2(l2const))(message)
+        message = Dense(128, kernel_regularizer=l2(l2const))(message)
+        message = Activation("relu")(message)
+        message = BatchNormalization()(message)
+
+        message = Dense(32, kernel_regularizer=l2(l2const))(message)
         message = Activation("relu")(message)
         message = BatchNormalization()(message)
 
