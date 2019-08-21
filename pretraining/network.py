@@ -151,7 +151,7 @@ class Network:
                                       epochs=n_epochs).history
 
     def predict(self, x):
-        return self.model.predict(np.expand_dims(x, axis=0))
+        return self.model.predict(x)
 
     def plot_csv(self):
         plt.rcParams['figure.figsize'] = [15, 7]

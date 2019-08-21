@@ -55,18 +55,20 @@ class RLTraining:
             self.chats_grads[2][i] = self.chats_grads[2][i] * 0
             self.chats_grads[3][i] = self.chats_grads[3][i] * 0
 
+    # adds gradients from pervious timesteps to gradients from this timestep
+    # how much weight is given to gradients from previous timesteps depends on GRADIENT_DISCOUNT
     def add_grads(self, agent_grads, chat_grads, id, step):
         # equation for first n elements of a geometric sequence
-        total_discount = (1 - GRADIENT_DISCOUNT ** (step + 1)) / (1 - GRADIENT_DISCOUNT)
+        total_avg = (1 - GRADIENT_DISCOUNT ** (step + 1)) / (1 - GRADIENT_DISCOUNT)
         for a in range(len(self.agents_grads[0])):
             if agent_grads[a] is None:
                 continue
-            new_avg = (self.agents_grads[id][a] * (total_discount - 1) + agent_grads[a]) / total_discount
+            new_avg = (self.agents_grads[id][a] * (total_avg - 1) + agent_grads[a]) / total_avg
             self.agents_grads[id][a] = new_avg
 
         # are later chats really more important? questionable decision
         for m in range(len(self.chats_grads[0])):
-            new_avg = (self.chats_grads[id][m] * (total_discount - 1) + chat_grads[m]) / total_discount
+            new_avg = (self.chats_grads[id][m] * (total_avg - 1) + chat_grads[m]) / total_avg
             self.chats_grads[id][m] = new_avg
 
     # died_first should ideally have at most 1 player from each team
