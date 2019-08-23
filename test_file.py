@@ -23,51 +23,32 @@ def add_message(message):
 msgs = [tf.Variable(tf.zeros((1,))) for _ in range(2)]
 loss = 0
 
-
 with tape:
     tape.watch(w)
 
     y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
-    add_message(y)
+    n_m = y
     print(tape.gradient(loss, w))
-    del y
+add_message(n_m)
 
+with tape:
     y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
-    add_message(y)
+    n_m = y
     print(tape.gradient(loss, w))
-    del y
+add_message(n_m)
 
+with tape:
     y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
-    add_message(y)
+    n_m = y
     print(tape.gradient(loss, w))
-    del y
+add_message(n_m)
 
+with tape:
     y = nn(tf.concat(msgs, 0))
     loss += compute_loss(y)
-    add_message(y)
+    n_m = y
     print(tape.gradient(loss, w))
-    del y
-
-
-class penis:
-    sdj = tf.constant(1.)
-
-    @tf.function
-    def f(self, x, sdj):
-        print(sdj)
-        self.sdj = tf.add(x, sdj)
-        return tf.add(x, self.sdj)
-
-
-scalar = tf.constant(1.0)
-# vector = tf.constant([1.0, 1.0])
-# matrix = tf.constant([[3.0]])
-
-d = penis()
-print(d.f(scalar, d.sdj))
-print(d.f(scalar, d.sdj))
-# print(f(vector))
-# print(f(matrix))
+add_message(n_m)

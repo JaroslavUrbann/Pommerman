@@ -95,15 +95,8 @@ class RLTraining:
         if won:
             self.apply_grads(won, died_first)
         self.reset_grads()
-        self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(2)]
+        self.chats = [[tf.Variable(tf.zeros((1, 3, 3, 1))) for _ in range(CHAT_HISTORY_LENGTH)] for _ in range(4)]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
-        new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
-        with new_tape:
-            new_tape.watch(self.model.trainable_variables)
-            new_tape.watch(self.chat_model.trainable_variables)
-        self.tapes.append(new_tape)
-        if len(self.tapes) > N_TAPES:
-            del self.tapes[0]
 
     # exchanges messages, is needed because some agents might be dead and can't add theirs to the chat
     def next_time_step(self):
@@ -112,6 +105,13 @@ class RLTraining:
             self.chats[c][0] = self.next_msgs[c]
             self.chats[c][1] = self.next_msgs[(c + 2) % 4]
         self.next_msgs = [tf.zeros((1, 3, 3, 1)) for _ in range(4)]
+        new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
+        with new_tape:
+            new_tape.watch(self.model.trainable_variables)
+            new_tape.watch(self.chat_model.trainable_variables)
+        self.tapes.append(new_tape)
+        if len(self.tapes) > N_TAPES:
+            del self.tapes[0]
 
     def training_step(self, agent_features, id, step):
         with ExitStack() as stack:
