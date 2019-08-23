@@ -33,9 +33,9 @@ def train_network(model, chat_model, n_steps):
             died = list(set(alive) - set(state[0]["alive"]))
             died_first += [d-10 for d in died if ((d - 8) % 4) not in died_first]
 
-            RL.next_time_step()
             alive = state[0]["alive"]
             state, reward, done, info = env.step(actions)
+            RL.end_step()
         n_episodes += 1
         RL.end_episode(died_first, info["winners"] if not info["result"] else [])
         print(info)

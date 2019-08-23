@@ -18,4 +18,3 @@ N_MESSAGE_BITS = 6
 CHAT_HISTORY_LENGTH = 64  # number of messages from each agent * 2
 GRADIENT_DISCOUNT = 0.999
 N_BP_MESSAGES = 8
-N_TAPES = 16  # 1 tape = 1 timestep
