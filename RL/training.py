@@ -1,6 +1,5 @@
 import tensorflow as tf
 from constants import *
-from contextlib import ExitStack
 import time
 
 tf.enable_eager_execution()
@@ -12,14 +11,18 @@ class RLTraining:
     def __init__(self, model, chat_model):
         self.model = model
         self.chat_model = chat_model
+
         self.agents_grads = [model.trainable_variables] * 4
         self.chats_grads = [chat_model.trainable_variables] * 4
+
         # this timestep + 32 previous timesteps
-        self.tapes = [[None] * (1 + CHAT_HISTORY_LENGTH / 2)] * 4
-        # this timestep + 32 previous timesteps
-        self.messages = [[tf.zeros((1, 3, 3, 1))] * (1 + CHAT_HISTORY_LENGTH / 2)] * 4
+        n_msgs = int((1 + CHAT_HISTORY_LENGTH / 2))
+        self.tapes = [[None] * n_msgs for _ in range(4)]
+        self.messages = [[tf.zeros((1, 3, 3))] * n_msgs for _ in range(4)]
+
         self.compute_loss = tf.keras.losses.SparseCategoricalCrossentropy()
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=LR)
+
         self.reset_grads()
 
 
@@ -63,20 +66,24 @@ class RLTraining:
         if won:
             self.apply_grads(won, died_first)
         self.reset_grads()
-        self.tapes = [[None] * (1 + CHAT_HISTORY_LENGTH / 2)] * 4
-        self.messages = [[tf.zeros((1, 3, 3, 1))] * (1 + CHAT_HISTORY_LENGTH / 2)] * 4
+
+        # this timestep + 32 previous timesteps
+        n_msgs = int((1 + CHAT_HISTORY_LENGTH / 2))
+        self.tapes = [[None] * n_msgs for _ in range(4)]
+        self.messages = [[tf.zeros((1, 3, 3))] * n_msgs for _ in range(4)]
 
 
     def end_step(self):
-        self.tapes = self.tapes[:, -1:] + self.tapes[:, :-1]
-        self.messages = self.messages[:, -1:] + self.messages[:, :-1]
+        for i in range(4):
+            self.tapes[i] = self.tapes[i][-1:] + self.tapes[i][:-1]
+            self.messages[i] = self.messages[i][-1:] + self.messages[i][:-1]
 
 
     def get_chat(self, id):
         chat = [None] * CHAT_HISTORY_LENGTH
         chat[0::2] = self.messages[id][1:]
         chat[1::2] = self.messages[(id + 2) % 4][1:]
-        chat = tf.concat(chat, 3)
+        chat = tf.stack(chat, 3)
         return chat
 
 
@@ -86,8 +93,8 @@ class RLTraining:
         msg = tf.math.sigmoid(msg)
 
         # reshape msg and add it to stack
-        msg = tf.reshape(msg, (1, 2, 3, 1))
-        padding = tf.zeros((1, 1, 3, 1))
+        msg = tf.reshape(msg, (1, 2, 3))
+        padding = tf.zeros((1, 1, 3))
         msg = tf.concat([msg, padding], 1)
         self.messages[id][0] = msg
 
@@ -109,23 +116,27 @@ class RLTraining:
             self.chats_grads[id][m] = (self.chats_grads[id][m] * (total_avg - 1) + chat_grads[m]) / total_avg
 
 
-    def backprop_chat(self, chat_grads, model_grads, chat_model_grads, id, step):
+    def backprop_chat(self, chat_grads, model_grads, chat_model_grads, id):
         abs_grads = tf.abs(chat_grads)
-        grads = tf.reduce_sum(abs_grads, [0, 1, 2, 3])
-        _, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
+        grads = tf.reduce_sum(abs_grads, [0, 1, 2])
+        sizes, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
 
         for i in range(N_BP_MESSAGES):
+            # if the message has even index, its this agent's, otherwise its his teammates
             msg_agent_id = (id + (indexes[i] % 2) * 2) % 4
             msg_id = indexes[i] // 2 + 1
-            if msg_id >= step:
+
+            if self.tapes[msg_agent_id][msg_id] is None or sizes[i] == 0.0:
                 continue
+
             with self.tapes[msg_agent_id][msg_id]:
-                self.messages[msg_agent_id][msg_id] *= chat_grads[indexes[i]] * 0.5 / N_BP_MESSAGES
+                self.messages[msg_agent_id][msg_id] *= chat_grads[:, :, :, indexes[i]] * 0.5 / N_BP_MESSAGES
             m_g, c_m_g = self.tapes[msg_agent_id][msg_id].gradient(self.messages[msg_agent_id][msg_id],
-                                                                    [self.model.trainable_variables,
+                                                                   [self.model.trainable_variables,
                                                                     self.chat_model.trainable_variables])
             model_grads += m_g
             chat_model_grads += c_m_g
+
         return model_grads, chat_model_grads
 
 
@@ -149,10 +160,11 @@ class RLTraining:
             action = tf.math.argmax(actions[0])
             loss = self.compute_loss([action], actions[0]) / 2
 
-        model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [self.model.trainable_variables, self.chat_model.trainable_variables, chat])
-        model_grads, chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id, step)
+        model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [self.model.trainable_variables,
+                                                                             self.chat_model.trainable_variables, chat])
+        new_model_grads, new_chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
 
-        self.add_grads(model_grads, chat_model_grads, id, step)
+        self.add_grads(new_model_grads, new_chat_model_grads, id, step)
 
         self.tapes[id][0] = new_tape
 
