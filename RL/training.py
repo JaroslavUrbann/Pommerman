@@ -75,8 +75,8 @@ class RLTraining:
 
     def end_step(self):
         for i in range(4):
-            self.tapes[i] = self.tapes[i][-1:] + self.tapes[i][:-1]
-            self.messages[i] = self.messages[i][-1:] + self.messages[i][:-1]
+            self.tapes[i] = [None] + self.tapes[i][:-1]
+            self.messages[i] = [tf.zeros((1, 3, 3))] + self.messages[i][:-1]
 
 
     def get_chat(self, id):
@@ -116,7 +116,7 @@ class RLTraining:
             self.chats_grads[id][m] = (self.chats_grads[id][m] * (total_avg - 1) + chat_grads[m]) / total_avg
 
 
-    def backprop_chat(self, chat_grads, model_grads, chat_model_grads, id):
+    def backprop_chat(self, chat_grads, model_grads, chat_model_grads, id, step):
         abs_grads = tf.abs(chat_grads)
         grads = tf.reduce_sum(abs_grads, [0, 1, 2])
         sizes, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
@@ -126,15 +126,15 @@ class RLTraining:
             msg_agent_id = (id + (indexes[i] % 2) * 2) % 4
             msg_id = indexes[i] // 2 + 1
 
-            if self.tapes[msg_agent_id][msg_id] is None or sizes[i] == 0.0:
+            if self.tapes[msg_agent_id][msg_id] is None or sizes[i] < 1e-20:
                 continue
 
             with self.tapes[msg_agent_id][msg_id]:
-                self.messages[msg_agent_id][msg_id] *= chat_grads[:, :, :, indexes[i]] * 0.5 / N_BP_MESSAGES
-            m_g, c_m_g = self.tapes[msg_agent_id][msg_id].gradient(self.messages[msg_agent_id][msg_id],
-                                                                   [self.model.trainable_variables,
-                                                                    self.chat_model.trainable_variables])
-            model_grads += m_g
+                msg = self.messages[msg_agent_id][msg_id] * chat_grads[:, :, :, indexes[i]]  # * 0.5 / N_BP_MESSAGES
+            m_g, c_m_g = self.tapes[msg_agent_id][msg_id].gradient(msg, [self.model.trainable_variables,
+                                                                         self.chat_model.trainable_variables])
+
+            model_grads += m_gd
             chat_model_grads += c_m_g
 
         return model_grads, chat_model_grads
@@ -150,7 +150,6 @@ class RLTraining:
             new_tape.watch(self.chat_model.trainable_variables)
             new_tape.watch(chat)
 
-            # gets chat features to put in his network
             chat_features = self.chat_model(chat)
             features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
             actions, msg = self.model(features)
@@ -162,7 +161,8 @@ class RLTraining:
 
         model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [self.model.trainable_variables,
                                                                              self.chat_model.trainable_variables, chat])
-        new_model_grads, new_chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
+
+        new_model_grads, new_chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id, step)
 
         self.add_grads(new_model_grads, new_chat_model_grads, id, step)
 
