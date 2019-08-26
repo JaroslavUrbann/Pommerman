@@ -116,7 +116,7 @@ class RLTraining:
             self.chats_grads[id][m] = (self.chats_grads[id][m] * (total_avg - 1) + chat_grads[m]) / total_avg
 
 
-    def backprop_chat(self, chat_grads, model_grads, chat_model_grads, id, step):
+    def backprop_chat(self, chat_grads, model_grads, chat_model_grads, id):
         abs_grads = tf.abs(chat_grads)
         grads = tf.reduce_sum(abs_grads, [0, 1, 2])
         sizes, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
@@ -134,17 +134,19 @@ class RLTraining:
             m_g, c_m_g = self.tapes[msg_agent_id][msg_id].gradient(msg, [self.model.trainable_variables,
                                                                          self.chat_model.trainable_variables])
 
-            model_grads += m_gd
+            model_grads += m_g
             chat_model_grads += c_m_g
 
         return model_grads, chat_model_grads
 
 
     def training_step(self, agent_features, id, step):
+        tim = time.time()
         new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
 
         chat = self.get_chat(id)
-
+        s = time.time() - tim
+        tim = time.time()
         with new_tape:
             new_tape.watch(self.model.trainable_variables)
             new_tape.watch(self.chat_model.trainable_variables)
@@ -158,14 +160,18 @@ class RLTraining:
 
             action = tf.math.argmax(actions[0])
             loss = self.compute_loss([action], actions[0]) / 2
-
+        a = time.time() - tim
+        tim = time.time()
         model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [self.model.trainable_variables,
                                                                              self.chat_model.trainable_variables, chat])
-
-        new_model_grads, new_chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id, step)
-
-        self.add_grads(new_model_grads, new_chat_model_grads, id, step)
+        b = time.time() - tim
+        tim = time.time()
+        model_grads, chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
+        c = time.time() - tim
+        tim = time.time()
+        self.add_grads(model_grads, chat_model_grads, id, step)
 
         self.tapes[id][0] = new_tape
-
+        l = time.time() - tim
+        print("full:", s+a+b+c+l, "start:", s, "forward:", a, "backward:", b, "history:", c, "last:", l)
         return action
