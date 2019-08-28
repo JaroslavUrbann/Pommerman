@@ -2,8 +2,6 @@ import tensorflow as tf
 from constants import *
 import time
 
-tf.enable_eager_execution()
-
 
 class RLTraining:
 
@@ -140,38 +138,39 @@ class RLTraining:
         return model_grads, chat_model_grads
 
 
-    def training_step(self, agent_features, id, step):
-        tim = time.time()
-        new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
+@tf.function
+def training_step(agent_features, id, step):
+    new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
 
-        chat = self.get_chat(id)
-        s = time.time() - tim
-        tim = time.time()
-        with new_tape:
-            new_tape.watch(self.model.trainable_variables)
-            new_tape.watch(self.chat_model.trainable_variables)
-            new_tape.watch(chat)
+    chat = T.get_chat(id)
 
-            chat_features = self.chat_model(chat)
-            features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
-            actions, msg = self.model(features)
+    with new_tape:
+        new_tape.watch(T.model.trainable_variables)
+        new_tape.watch(T.chat_model.trainable_variables)
+        new_tape.watch(chat)
 
-            self.add_message(msg, id)
+        chat_features = T.chat_model(chat)
+        features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
+        actions, msg = T.model(features)
 
-            action = tf.math.argmax(actions[0])
-            loss = self.compute_loss([action], actions[0]) / 2
-        a = time.time() - tim
-        tim = time.time()
-        model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [self.model.trainable_variables,
-                                                                             self.chat_model.trainable_variables, chat])
-        b = time.time() - tim
-        tim = time.time()
-        model_grads, chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
-        c = time.time() - tim
-        tim = time.time()
-        self.add_grads(model_grads, chat_model_grads, id, step)
+        # T.add_message(msg, id)
 
-        self.tapes[id][0] = new_tape
-        l = time.time() - tim
-        print("full:", s+a+b+c+l, "start:", s, "forward:", a, "backward:", b, "history:", c, "last:", l)
-        return action
+        action = tf.math.argmax(actions[0])
+        loss = T.compute_loss([action], actions[0]) / 2
+
+    model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [T.model.trainable_variables,
+                                                                         T.chat_model.trainable_variables, chat])
+    # model_grads, chat_model_grads = T.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
+    # T.add_grads(model_grads, chat_model_grads, id, step)
+
+    T.tapes[id][0] = new_tape
+
+    return action
+
+
+T = None
+
+
+def init_training(model, chat_model):
+    global T
+    T = RLTraining(model, chat_model)

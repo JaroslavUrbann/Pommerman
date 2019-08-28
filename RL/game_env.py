@@ -2,19 +2,19 @@ import pommerman
 from feature_engineer import FeatureEngineer
 from pommerman.agents import BaseAgent
 from pommerman import characters
-from RL.training import RLTraining
+from RL import training
 import time
 
 
 def train_network(model, chat_model, n_steps):
     tim = time.time()
 
-    RL = RLTraining(model, chat_model)
+    training.init_training(model, chat_model)
 
-    agent0 = NetworkAgent(RL, 0)
-    agent1 = NetworkAgent(RL, 1)
-    agent2 = NetworkAgent(RL, 2)
-    agent3 = NetworkAgent(RL, 3)
+    agent0 = NetworkAgent(0)
+    agent1 = NetworkAgent(1)
+    agent2 = NetworkAgent(2)
+    agent3 = NetworkAgent(3)
 
     agent_list = [agent0, agent1, agent2, agent3]
     env = pommerman.make('PommeRadioCompetition-v2', agent_list)
@@ -35,9 +35,9 @@ def train_network(model, chat_model, n_steps):
 
             alive = state[0]["alive"]
             state, reward, done, info = env.step(actions)
-            RL.end_step()
+            training.T.end_step()
         n_episodes += 1
-        RL.end_episode(died_first, info["winners"] if not info["result"] else [])
+        training.T.end_episode(died_first, info["winners"] if not info["result"] else [])
         print(info)
     env.close()
     print("----------------------------------------------------------------------------------------------")
@@ -47,15 +47,14 @@ def train_network(model, chat_model, n_steps):
 
 class NetworkAgent(BaseAgent):
 
-    def __init__(self, RL, id):
+    def __init__(self, id):
         super(NetworkAgent, self).__init__(characters.Bomber)
-        self.RL = RL
         self.feature_engineer = FeatureEngineer()
         self.a_id = id
 
     def act(self, observation, action_space):
         features = self.feature_engineer.get_features(observation)
-        action = self.RL.training_step(features, self.a_id, int(observation["step_count"])).numpy()
+        action = training.training_step(features, self.a_id, int(observation["step_count"])).numpy()
         return action, 0, 0
 
     def episode_end(self, reward):
