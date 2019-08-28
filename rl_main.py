@@ -3,7 +3,6 @@ from pretraining.network import Network
 from RL.chat_network import ChatNetwork
 import gdrive_auth
 import numpy as np
-from threading import Thread
 
 model_id = "1-N2tLjFSgxS2ZFLhd1kQFe60wwMZ2_di"
 model_name = "small_N1_RL"
