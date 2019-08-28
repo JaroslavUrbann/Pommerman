@@ -2,14 +2,14 @@ import pommerman
 from feature_engineer import FeatureEngineer
 from pommerman.agents import BaseAgent
 from pommerman import characters
-from RL import training
+from RL import training as T
 import time
 
 
 def train_network(model, chat_model, n_steps):
     tim = time.time()
 
-    training.init_training(model, chat_model)
+    T.init_training(model, chat_model)
 
     agent0 = NetworkAgent(0)
     agent1 = NetworkAgent(1)
@@ -35,9 +35,9 @@ def train_network(model, chat_model, n_steps):
 
             alive = state[0]["alive"]
             state, reward, done, info = env.step(actions)
-            training.T.end_step()
+            T.end_step()
         n_episodes += 1
-        training.T.end_episode(died_first, info["winners"] if not info["result"] else [])
+        T.end_episode(died_first, info["winners"] if not info["result"] else [])
         print(info)
     env.close()
     print("----------------------------------------------------------------------------------------------")
@@ -54,7 +54,7 @@ class NetworkAgent(BaseAgent):
 
     def act(self, observation, action_space):
         features = self.feature_engineer.get_features(observation)
-        action = training.training_step(features, self.a_id, int(observation["step_count"])).numpy()
+        action = T.training_step(features, self.a_id, int(observation["step_count"])).numpy()
         return action, 0, 0
 
     def episode_end(self, reward):
