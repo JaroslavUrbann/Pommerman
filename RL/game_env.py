@@ -7,7 +7,7 @@ import time
 
 
 def train_network(model, chat_model, n_steps):
-    tim = time.time()
+    tr = time.time()
 
     T.init_training(model, chat_model)
 
@@ -26,9 +26,12 @@ def train_network(model, chat_model, n_steps):
         died_first = []
         alive = state[0]["alive"]
         done = False
+        e_step = 0
         while not done:
+            tim = time.time()
             actions = env.act(state)
             step += 1
+            e_step += 1
 
             died = list(set(alive) - set(state[0]["alive"]))
             died_first += [d-10 for d in died if ((d - 8) % 4) not in died_first]
@@ -36,12 +39,13 @@ def train_network(model, chat_model, n_steps):
             alive = state[0]["alive"]
             state, reward, done, info = env.step(actions)
             T.end_step()
+            print(e_step, "time:", time.time() - tim, flush=True)
         n_episodes += 1
         T.end_episode(died_first, info["winners"] if not info["result"] else [])
-        print(info)
+        print(info, flush=True)
     env.close()
     print("----------------------------------------------------------------------------------------------")
-    print("RL training done in: " + str(time.time() - tim) + " n_episodes: " + str(n_episodes) + " n_steps: " + str(step))
+    print("RL training done in: " + str(time.time() - tr) + " n_episodes: " + str(n_episodes) + " n_steps: " + str(step))
     print("----------------------------------------------------------------------------------------------")
 
 

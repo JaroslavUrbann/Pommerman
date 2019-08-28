@@ -125,7 +125,6 @@ def backprop_chat(chat_grads, model_grads, chat_model_grads, id):
     return model_grads, chat_model_grads
 
 
-@tf.function
 def training_step(agent_features, id, step):
     global model, chat_model, agents_grads, chats_grads, tapes, messages, compute_loss, optimizer
     new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
@@ -141,15 +140,15 @@ def training_step(agent_features, id, step):
         features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
         actions, msg = model(features)
 
-        # T.add_message(msg, id)
+        add_message(msg, id)
 
         action = tf.math.argmax(actions[0])
         loss = compute_loss([action], actions[0]) / 2
 
     model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [model.trainable_variables,
                                                                          chat_model.trainable_variables, chat])
-    # model_grads, chat_model_grads = T.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
-    # T.add_grads(model_grads, chat_model_grads, id, step)
+    model_grads, chat_model_grads = backprop_chat(chat_grads, model_grads, chat_model_grads, id)
+    add_grads(model_grads, chat_model_grads, id, step)
 
     tapes[id][0] = new_tape
 
