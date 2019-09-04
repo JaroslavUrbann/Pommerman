@@ -1,6 +1,7 @@
 import tensorflow as tf
 from constants import *
 import time
+import numpy as np
 
 
 def reset_grads():
@@ -106,6 +107,8 @@ def backprop_chat(chat_grads, model_grads, chat_model_grads, id):
     grads = tf.reduce_sum(abs_grads, [0, 1, 2])
     sizes, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
 
+#     al = 0
+#     siz = 0.1
     for i in range(N_BP_MESSAGES):
         # if the message has even index, its this agent's, otherwise its his teammates
         msg_agent_id = (id + (indexes[i] % 2) * 2) % 4
@@ -115,13 +118,17 @@ def backprop_chat(chat_grads, model_grads, chat_model_grads, id):
             continue
 
         with tapes[msg_agent_id][msg_id]:
-            msg = messages[msg_agent_id][msg_id] * chat_grads[:, :, :, indexes[i]]  # * 0.5 / N_BP_MESSAGES
+            msg = messages[msg_agent_id][msg_id] * chat_grads[:, :, :, indexes[i]] * 1e4 # arbitrary number to combat vanishing gradient by upscaling everything to roughly the same scale as the first model backprop
         m_g, c_m_g = tapes[msg_agent_id][msg_id].gradient(msg, [model.trainable_variables,
                                                                  chat_model.trainable_variables])
+#         for i in range(len(m_g)):
+#             if m_g[i] is not None:
+#                 al += np.sum(np.absolute(m_g[i]))
+#                 siz += np.array(m_g[i]).size
 
         model_grads += m_g
         chat_model_grads += c_m_g
-
+#     print(al/siz)
     return model_grads, chat_model_grads
 
 
@@ -143,15 +150,26 @@ def training_step(agent_features, id, step):
         add_message(msg, id)
 
         action = tf.math.argmax(actions[0])
-        loss = compute_loss([action], actions[0]) / 2
+        loss = compute_loss([action], actions[0])
 
+    a = time.time()
     model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [model.trainable_variables,
                                                                          chat_model.trainable_variables, chat])
+#     al = 0
+#     siz = 0
+#     for i in range(len(model_grads)):
+#         if model_grads[i] is not None:
+#             al += np.sum(np.absolute(model_grads[i]))
+#             siz += np.array(model_grads[i]).size
+#     print(al/siz, "-------------------")
+    b = time.time() - a
+    a = time.time()
     model_grads, chat_model_grads = backprop_chat(chat_grads, model_grads, chat_model_grads, id)
+    c = time.time() - a
     add_grads(model_grads, chat_model_grads, id, step)
 
     tapes[id][0] = new_tape
-
+#     print(c)
     return action
 
 

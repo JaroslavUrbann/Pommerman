@@ -39,7 +39,7 @@ def train_network(model, chat_model, n_steps):
             alive = state[0]["alive"]
             state, reward, done, info = env.step(actions)
             T.end_step()
-            print(e_step, "time:", time.time() - tim, flush=True)
+#             print(e_step, "time:", time.time() - tim, flush=True)
         n_episodes += 1
         T.end_episode(died_first, info["winners"] if not info["result"] else [])
         print(info, flush=True)
