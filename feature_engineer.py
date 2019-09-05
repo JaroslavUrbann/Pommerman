@@ -8,7 +8,7 @@ class FeatureEngineer:
     def __init__(self, CN=None):
         self.CN = CN
         self.messages = [np.zeros((1, 3, 3))] * CHAT_HISTORY_LENGTH
-        self._chat_features_map = np.zeros(BOARD_SIZE + (4,), dtype="float32")
+        self._chat_features_map = np.zeros(BOARD_SIZE + (4,))
 
         self._wood_map = np.zeros(BOARD_SIZE)
         self._stone_map = np.zeros(BOARD_SIZE)
@@ -51,7 +51,7 @@ class FeatureEngineer:
         msg[1] = max(0, message[1] - 1)
         dec = msg[0] * 8 + msg[1]
         binary = format(dec, '06b')
-        msg = np.zeros((1, 3, 3), dtype="float32")
+        msg = np.zeros((1, 3, 3))
         msg[0, 0, 0] = int(binary[0])
         msg[0, 0, 1] = int(binary[1])
         msg[0, 0, 2] = int(binary[2])
@@ -64,7 +64,8 @@ class FeatureEngineer:
     def _update_chat_features_map(self, messages):
         self.messages = [self._dec_to_binary(messages[0]), self._dec_to_binary(messages[1])] + self.messages[2:]
         chat = np.stack(self.messages, 3)
-        self._chat_features_map = self.CN(chat)
+        chat = np.array(chat, dtype="float32")
+        self._chat_features_map = self.CN(chat).numpy()
 
     def _get_fov_boundries(self, observation):
         # player position
