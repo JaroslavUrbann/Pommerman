@@ -187,6 +187,6 @@ def init_training(m, c_m):
     messages = [[tf.zeros((1, 3, 3))] * n_msgs for _ in range(4)]
 
     compute_loss = tf.keras.losses.SparseCategoricalCrossentropy()
-    optimizer = tf.keras.optimizers.Adam(learning_rate=LR)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=RL_LR)
 
     reset_grads()
