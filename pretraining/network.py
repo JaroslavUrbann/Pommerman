@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from pretraining import DB
 import pandas
 import numpy as np
+import math
 
 
 class Network:
@@ -151,7 +152,14 @@ class Network:
                                       epochs=n_epochs).history
 
     def predict(self, x):
-        return self.model.predict(x)
+        actions, message = self.model.predict(x)
+        a = np.argmax(actions)
+        sigmoid = lambda x: 1 / (1 + math.exp(-x))
+        message = sigmoid(message)
+        binary = "".join(str(m // 0.5) for m in message)
+        dec = int(binary, 2)
+        msg = (dec // 8 + 1, dec % 8 + 1)
+        return a, msg
 
     def plot_csv(self):
         plt.rcParams['figure.figsize'] = [15, 7]

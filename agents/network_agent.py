@@ -13,8 +13,8 @@ class NetworkAgent(BaseAgent):
 
     def act(self, observation, action_space):
         features = self.feature_engineer.get_features(observation)
-        actions, _ = self.network.predict(features)
-        return np.argmax(actions)
+        action, _ = self.network.predict(features)
+        return action
 
     def episode_end(self, reward):
         self.feature_engineer = FeatureEngineer()

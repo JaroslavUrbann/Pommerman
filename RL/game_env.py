@@ -6,7 +6,7 @@ from RL import training as T
 import time
 
 
-def train_network(model, chat_model, n_steps):
+def train_network(model, chat_model, n_steps, max_time):
     tr = time.time()
 
     T.init_training(model, chat_model)
@@ -21,7 +21,7 @@ def train_network(model, chat_model, n_steps):
 
     n_episodes = 0
     step = 0
-    while step < n_steps:
+    while step < n_steps and max_time > time.time() - tr:
         state = env.reset()
         died_first = []
         alive = state[0]["alive"]
@@ -42,7 +42,7 @@ def train_network(model, chat_model, n_steps):
 #             print(e_step, "time:", time.time() - tim, flush=True)
         n_episodes += 1
         T.end_episode(died_first, info["winners"] if not info["result"] else [])
-        print(info, flush=True)
+        print(n_episodes, "steps:", step, "time:", int(time.time() - tr), info, flush=True)
     env.close()
     print("----------------------------------------------------------------------------------------------")
     print("RL training done in: " + str(time.time() - tr) + " n_episodes: " + str(n_episodes) + " n_steps: " + str(step))

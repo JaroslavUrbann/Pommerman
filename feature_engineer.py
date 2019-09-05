@@ -4,33 +4,39 @@ from constants import *
 
 
 class FeatureEngineer:
-    _wood_map = np.zeros(BOARD_SIZE)
-    _stone_map = np.zeros(BOARD_SIZE)
-    _ammo_powerup_map = np.zeros(BOARD_SIZE)
-    _range_powerup_map = np.zeros(BOARD_SIZE)
-    _kick_powerup_map = np.zeros(BOARD_SIZE)
-    _fog_map = np.zeros(BOARD_SIZE)
 
-    _agent_map = np.zeros(BOARD_SIZE)
-    _teammate_map = np.zeros(BOARD_SIZE)
-    _enemies_map = np.zeros(BOARD_SIZE)
+    def __init__(self, CN=None):
+        self.CN = CN
+        self.messages = [np.zeros((1, 3, 3))] * CHAT_HISTORY_LENGTH
+        self._chat_features_map = np.zeros(BOARD_SIZE + (4,))
 
-    _bomb_map = np.zeros(BOARD_SIZE)
-    _bomb_history_map = np.zeros(BOARD_SIZE)
-    _hidden_blast_strength_map = np.zeros(BOARD_SIZE)
-    _blast_strength_map = np.zeros(BOARD_SIZE)
-    _flame_map = np.zeros(BOARD_SIZE)
+        self._wood_map = np.zeros(BOARD_SIZE)
+        self._stone_map = np.zeros(BOARD_SIZE)
+        self._ammo_powerup_map = np.zeros(BOARD_SIZE)
+        self._range_powerup_map = np.zeros(BOARD_SIZE)
+        self._kick_powerup_map = np.zeros(BOARD_SIZE)
+        self._fog_map = np.zeros(BOARD_SIZE)
 
-    _ammo1_map = np.zeros(BOARD_SIZE)
-    _ammo2_map = np.zeros(BOARD_SIZE)
-    _ammo3_map = np.zeros(BOARD_SIZE)
-    _ammo4_map = np.zeros(BOARD_SIZE)
-    _blast1_map = np.zeros(BOARD_SIZE)
-    _blast2_map = np.zeros(BOARD_SIZE)
-    _blast3_map = np.zeros(BOARD_SIZE)
-    _kick_map = np.zeros(BOARD_SIZE)
+        self._agent_map = np.zeros(BOARD_SIZE)
+        self._teammate_map = np.zeros(BOARD_SIZE)
+        self._enemies_map = np.zeros(BOARD_SIZE)
 
-    _features = np.zeros((1, BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES), dtype="float32")
+        self._bomb_map = np.zeros(BOARD_SIZE)
+        self._bomb_history_map = np.zeros(BOARD_SIZE)
+        self._hidden_blast_strength_map = np.zeros(BOARD_SIZE)
+        self._blast_strength_map = np.zeros(BOARD_SIZE)
+        self._flame_map = np.zeros(BOARD_SIZE)
+
+        self._ammo1_map = np.zeros(BOARD_SIZE)
+        self._ammo2_map = np.zeros(BOARD_SIZE)
+        self._ammo3_map = np.zeros(BOARD_SIZE)
+        self._ammo4_map = np.zeros(BOARD_SIZE)
+        self._blast1_map = np.zeros(BOARD_SIZE)
+        self._blast2_map = np.zeros(BOARD_SIZE)
+        self._blast3_map = np.zeros(BOARD_SIZE)
+        self._kick_map = np.zeros(BOARD_SIZE)
+
+        self._features = np.zeros((1, BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES), dtype="float32")
 
     # _agent_number = 0
     #
@@ -38,6 +44,27 @@ class FeatureEngineer:
     #     if not self._agent_number:
     #         self._agent_number = 10 + 11 + 12 + 13 - observation[TEAMMATE].value - observation[ENEMIES][0].value - observation[ENEMIES][1].value
     #     return self._agent_number
+
+    def _dec_to_binary(self, message):
+        msg = [0, 0]
+        msg[0] = max(0, message[0] - 1)
+        msg[1] = max(0, message[1] - 1)
+        dec = msg[0] * 8 + msg[1]
+        binary = format(dec, '06b')
+        msg = np.zeros((1, 3, 3))
+        msg[0, 0, 0] = int(binary[0])
+        msg[0, 0, 1] = int(binary[1])
+        msg[0, 0, 2] = int(binary[2])
+        msg[0, 1, 0] = int(binary[3])
+        msg[0, 1, 1] = int(binary[4])
+        msg[0, 1, 2] = int(binary[5])
+        return msg
+
+    # (my message, teammates mesage) from previous round
+    def _update_chat_features_map(self, messages):
+        self.messages = [self._dec_to_binary(messages[0]), self._dec_to_binary(messages[1])] + self.messages[2:]
+        chat = np.stack(self.messages, 3)
+        self._chat_features_map = self.CN(chat)
 
     def _get_fov_boundries(self, observation):
         # player position
@@ -218,7 +245,7 @@ class FeatureEngineer:
         # just a fucking fog map
         self._fog_map = np.where(observation["board"] == FOG, 1, 0)
 
-    def get_features(self, observation):
+    def get_features(self, observation, messages=((0, 0), (0, 0))):
         self._update_materials_map(observation, self._wood_map, WOOD)
         self._update_materials_map(observation, self._stone_map, STONE)
         self._update_materials_map(observation, self._ammo_powerup_map, AMMO_POWERUP)
@@ -232,6 +259,8 @@ class FeatureEngineer:
         self._update_flame_map(observation)
         self._update_blast_strength_map()
         self._update_status_maps(observation)
+        if self.CN is not None:
+            self._update_chat_features_map(messages)
 
         self._features[:, :, :, 0] = self._wood_map
         self._features[:, :, :, 1] = self._stone_map
@@ -254,9 +283,6 @@ class FeatureEngineer:
         self._features[:, :, :, 18] = self._blast2_map
         self._features[:, :, :, 19] = self._blast3_map
         self._features[:, :, :, 20] = self._kick_map
-        self._features[:, :, :, 21] = np.zeros(BOARD_SIZE)
-        self._features[:, :, :, 22] = np.zeros(BOARD_SIZE)
-        self._features[:, :, :, 23] = np.zeros(BOARD_SIZE)
-        self._features[:, :, :, 24] = np.zeros(BOARD_SIZE)
+        self._features[:, :, :, 21:25] = self._chat_features_map
 
         return self._features
