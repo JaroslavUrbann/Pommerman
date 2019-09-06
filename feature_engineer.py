@@ -22,7 +22,7 @@ class FeatureEngineer:
         self._enemies_map = np.zeros(BOARD_SIZE)
 
         self._bomb_map = np.zeros(BOARD_SIZE)
-        self._bomb_history_map = np.zeros(BOARD_SIZE)
+        self._bomb_history_map = np.zeros(BOARD_SIZE) # used to possibly show moving direction of bombs
         self._hidden_blast_strength_map = np.zeros(BOARD_SIZE)
         self._blast_strength_map = np.zeros(BOARD_SIZE)
         self._flame_map = np.zeros(BOARD_SIZE)
@@ -33,7 +33,6 @@ class FeatureEngineer:
         self._ammo4_map = np.zeros(BOARD_SIZE)
         self._blast1_map = np.zeros(BOARD_SIZE)
         self._blast2_map = np.zeros(BOARD_SIZE)
-        self._blast3_map = np.zeros(BOARD_SIZE)
         self._kick_map = np.zeros(BOARD_SIZE)
 
         self._features = np.zeros((1, BOARD_SIZE[0], BOARD_SIZE[1], N_FEATURES), dtype="float32")
@@ -79,14 +78,13 @@ class FeatureEngineer:
         return top, bottom, left, right
 
     def _update_status_maps(self, observation):
-        # ammo1, ammo2, ammo3, ammo4, blast_strength2, blast_strength3, blast_strength4, can_kick, 0, 0, 0
+        # ammo can be probably infinite, blast starts at 2 and goes to max 4
         self._ammo1_map = np.ones(BOARD_SIZE) if observation["ammo"] > 0 else np.zeros(BOARD_SIZE)
         self._ammo2_map = np.ones(BOARD_SIZE) if observation["ammo"] > 1 else np.zeros(BOARD_SIZE)
         self._ammo3_map = np.ones(BOARD_SIZE) if observation["ammo"] > 2 else np.zeros(BOARD_SIZE)
         self._ammo4_map = np.ones(BOARD_SIZE) if observation["ammo"] > 3 else np.zeros(BOARD_SIZE)
-        self._blast1_map = np.ones(BOARD_SIZE) if observation["blast_strength"] > 1 else np.zeros(BOARD_SIZE)
-        self._blast2_map = np.ones(BOARD_SIZE) if observation["blast_strength"] > 2 else np.zeros(BOARD_SIZE)
-        self._blast3_map = np.ones(BOARD_SIZE) if observation["blast_strength"] > 3 else np.zeros(BOARD_SIZE)
+        self._blast1_map = np.ones(BOARD_SIZE) if observation["blast_strength"] > 2 else np.zeros(BOARD_SIZE)
+        self._blast2_map = np.ones(BOARD_SIZE) if observation["blast_strength"] > 3 else np.zeros(BOARD_SIZE)
         self._kick_map = np.ones(BOARD_SIZE) if int(observation["can_kick"]) else np.zeros(BOARD_SIZE)
 
     # should be used for WOOD, STONE, POWERUPS, has be updated before flames
@@ -282,8 +280,7 @@ class FeatureEngineer:
         self._features[:, :, :, 16] = self._ammo4_map
         self._features[:, :, :, 17] = self._blast1_map
         self._features[:, :, :, 18] = self._blast2_map
-        self._features[:, :, :, 19] = self._blast3_map
-        self._features[:, :, :, 20] = self._kick_map
-        self._features[:, :, :, 21:25] = self._chat_features_map
+        self._features[:, :, :, 19] = self._kick_map
+        self._features[:, :, :, 20:24] = self._chat_features_map
 
         return self._features

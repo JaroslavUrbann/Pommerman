@@ -144,7 +144,7 @@ def training_step(agent_features, id, step):
         new_tape.watch(chat)
 
         chat_features = chat_model(chat)
-        features = tf.concat([agent_features[:, :, :, :21], chat_features], 3)
+        features = tf.concat([agent_features[:, :, :, :20], chat_features], 3)
         actions, msg = model(features)
 
         add_message(msg, id)

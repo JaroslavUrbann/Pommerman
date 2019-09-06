@@ -154,8 +154,8 @@ class Network:
         actions, message = self.model.predict(x)
         a = np.argmax(actions)
         sigmoid = lambda x: 1 / (1 + np.exp(-x))
-        message = sigmoid(message)
-        binary = "".join(str(m // 0.5) for m in message)
+        message = sigmoid(message[0])
+        binary = "".join(str(int(m // 0.5)) for m in message)
         dec = int(binary, 2)
         msg = (dec // 8 + 1, dec % 8 + 1)
         return a, msg
