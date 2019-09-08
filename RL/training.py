@@ -1,5 +1,6 @@
 import tensorflow as tf
 from constants import *
+from RL import action_filter as AF
 import time
 import numpy as np
 
@@ -132,7 +133,7 @@ def backprop_chat(chat_grads, model_grads, chat_model_grads, id):
     return model_grads, chat_model_grads
 
 
-def training_step(agent_features, id, step):
+def training_step(agent_features, id, step, position):
     global model, chat_model, agents_grads, chats_grads, tapes, messages, compute_loss, optimizer
     new_tape = tf.GradientTape(watch_accessed_variables=False, persistent=True)
 
@@ -149,10 +150,17 @@ def training_step(agent_features, id, step):
 
         add_message(msg, id)
 
-        action = tf.math.argmax(actions[0])
+        action_filter = AF.get_action_filter(position, features)
+        action = AF.apply_action_filter(action_filter, actions[0])
+
+        # if all actions result in a certain death, don't compute gradients and just return 0
+        if action is None:
+            tapes[id][0] = new_tape
+            return 0
+
+        # computes loss in regards to the first possible choice of the model, that doesn't result in a certain death
         loss = compute_loss([action], actions[0])
 
-    a = time.time()
     model_grads, chat_model_grads, chat_grads = new_tape.gradient(loss, [model.trainable_variables,
                                                                          chat_model.trainable_variables, chat])
 #     al = 0
@@ -162,14 +170,13 @@ def training_step(agent_features, id, step):
 #             al += np.sum(np.absolute(model_grads[i]))
 #             siz += np.array(model_grads[i]).size
 #     print(al/siz, "-------------------")
-    b = time.time() - a
-    a = time.time()
+
     model_grads, chat_model_grads = backprop_chat(chat_grads, model_grads, chat_model_grads, id)
-    c = time.time() - a
+
     add_grads(model_grads, chat_model_grads, id, step)
 
     tapes[id][0] = new_tape
-#     print(c)
+
     return action
 
 
