@@ -31,7 +31,7 @@ def is_square_lethal(row, col, features):
     if features[0, row, col, 0] == 1 or features[0, row, col, 1] == 1:
         return True
     # will there be a flame next timestep? (from a previous flame)
-    if features[0, row, col, 11] > 0.1:
+    if features[0, row, col, 12] == 1:
         return True
     # is there a bomb that explodes next timestep?
     if features[0, row, col, 9] == 0.9:
@@ -48,21 +48,21 @@ def is_square_safe(row, col, features):
     if is_square_lethal(row, col, features):
         return 0
 
-    # # is there a bomb and how safe is the space behind it?
-    # # (cat it be moved, is there a possibility that there will be flames next timestep etc.)
-    # if features[0, row, col, 9] > 0:
-    #     safeness_of_space_behind_bomb = 0.1
-    #     if row < 10 and features[0, row + 1, col, 7] == 1:
-    #         return is_square_safe(row - 1, col, features)
-    #     if col < 10 and features[0, row, col + 1, 7] == 1:
-    #         return is_square_safe(row, col - 1, features)
-    #     if row > 0 and features[0, row - 1, col, 7] == 1:
-    #         return is_square_safe(row + 1, col, features)
-    #     if col > 0 and features[0, row, col - 1, 7] == 1:
-    #         return is_square_safe(row, col + 1, features)
-    #     else:  # there are 2 bombs after each other and the second one could be moving / start moving
-    #         return ?
-    #
+    # is there a bomb and how safe is the space behind it?
+    # (cat it be moved, is there a possibility that there will be flames next timestep etc.)
+    if features[0, row, col, 9] > 0:
+        if row < 10 and features[0, row + 1, col, 7] == 1:
+            return is_square_safe(row - 1, col, features)
+        if col < 10 and features[0, row, col + 1, 7] == 1:
+            return is_square_safe(row, col - 1, features)
+        if row > 0 and features[0, row - 1, col, 7] == 1:
+            return is_square_safe(row + 1, col, features)
+        if col > 0 and features[0, row, col - 1, 7] == 1:
+            return is_square_safe(row, col + 1, features)
+        # else:  # there are 2 bombs after each other and the second one could be moving / start moving
+        #     return 1
+
+    # this will need reworking if I ever use it, since I changed the flame / blast strength system
     # # uncertainty section:
     # # calculating the exact position of a bomb / enemy / teammate in the next step is either very hard or impossible
     # # (the bomb can be moving / start moving at any time in any direction etc.)

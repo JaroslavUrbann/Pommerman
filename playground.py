@@ -21,18 +21,18 @@ def main():
         # agents.SimpleAgent(),
         # agents.SimpleAgent(),
         # DockerAgent("multiagentlearning/hakozakijunctions", 80)
-        TestAgent(),
+        # TestAgent(),
         TestAgent(),
         TestAgent(),
         TestAgent(),
         # agents.RandomAgent(),
         # agents.RandomAgent(),
-        # agents.PlayerAgent(agent_control="arrows")
+        agents.PlayerAgent(agent_control="arrows")
         # DockerAgent("multiagentlearning/navocado", port=81),
     ]
 
     # env = pommerman.make('PommeRadioCompetition-v2', agent_list)
-    env = pommerman.make('PommeTeamCompetition-v1', agent_list)
+    env = pommerman.make('PommeRadioCompetition-v2', agent_list)
 
     # Run the episodes just like OpenAI Gym
     i = 0
@@ -42,9 +42,9 @@ def main():
         done = False
         while not done:
             i += 1
-            # env.render()
+            env.render()
             actions = env.act(state)
-            # print(actions)
+            # print(state[3]["ammo"])
             state, reward, done, info = env.step(actions)
             # print(done)
             # print(info["result"].value)
@@ -61,8 +61,13 @@ class TestAgent(BaseAgent):
     feature_engineer = FeatureEngineer()
 
     def act(self, observation, action_space):
+        xd = self.feature_engineer.get_features(observation)
+        # print(xd[0, :, :, 0])
+        # print(".........")
+        # print(xd[0, :, :, 11])
+        # print(observation["board"])
         # print("...........................................................")
-        # print(observation)
+        # print(observation["flame_life"])
         # print("...........................................................")
         # self.feature_engineer.update_features(observation)
         # print(sys.getsizeof(observation))

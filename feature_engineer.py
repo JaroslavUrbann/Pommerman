@@ -25,7 +25,13 @@ class FeatureEngineer:
         self._bomb_history_map = np.zeros(BOARD_SIZE) # used to possibly show moving direction of bombs
         self._hidden_blast_strength_map = np.zeros(BOARD_SIZE)
         self._blast_strength_map = np.zeros(BOARD_SIZE)
-        self._flame_map = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_6 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_7 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_8 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_9 = np.zeros(BOARD_SIZE)
+        self._flame_map_1 = np.zeros(BOARD_SIZE)
+        self._flame_map_2 = np.zeros(BOARD_SIZE)
+        self._flame_map_3 = np.zeros(BOARD_SIZE)
 
         self._ammo1_map = np.zeros(BOARD_SIZE)
         self._ammo2_map = np.zeros(BOARD_SIZE)
@@ -44,6 +50,8 @@ class FeatureEngineer:
     #         self._agent_number = 10 + 11 + 12 + 13 - observation[TEAMMATE].value - observation[ENEMIES][0].value - observation[ENEMIES][1].value
     #     return self._agent_number
 
+
+    # gets message from game format [1,8] to binary format in shape (1, 3, 3) (using only first 2 rows)
     def _dec_to_binary(self, message):
         msg = [0, 0]
         msg[0] = max(0, message[0] - 1)
@@ -59,12 +67,14 @@ class FeatureEngineer:
         msg[0, 1, 2] = int(binary[5])
         return msg
 
+
     # (my message, teammates mesage) from previous round
     def _update_chat_features_map(self, messages):
         self.messages = [self._dec_to_binary(messages[0]), self._dec_to_binary(messages[1])] + self.messages[2:]
         chat = np.stack(self.messages, 3)
         chat = np.array(chat, dtype="float32")
         self._chat_features_map = self.CN(chat).numpy()
+
 
     def _get_fov_boundries(self, observation):
         # player position
@@ -77,6 +87,7 @@ class FeatureEngineer:
         right = min(col + 5, BOARD_SIZE[1])
         return top, bottom, left, right
 
+
     def _update_status_maps(self, observation):
         # ammo can be probably infinite, blast starts at 2 and goes to max 4
         self._ammo1_map = np.ones(BOARD_SIZE) if observation["ammo"] > 0 else np.zeros(BOARD_SIZE)
@@ -87,8 +98,13 @@ class FeatureEngineer:
         self._blast2_map = np.ones(BOARD_SIZE) if observation["blast_strength"] > 3 else np.zeros(BOARD_SIZE)
         self._kick_map = np.ones(BOARD_SIZE) if int(observation["can_kick"]) else np.zeros(BOARD_SIZE)
 
-    # should be used for WOOD, STONE, POWERUPS, has be updated before flames
+
+    # should be used for WOOD, STONE, POWERUPS
     def _update_materials_map(self, observation, map, material):
+
+        # remove wood if there are flames
+        if material == WOOD:
+            map[self._flame_map_1 == 1] = 0
 
         # gets boundries of agents' field of view
         top, bottom, left, right = self._get_fov_boundries(observation)
@@ -102,11 +118,8 @@ class FeatureEngineer:
         # rewrites visible part of the map with updated mappings
         map[top:bottom, left:right] = filtered_fov
 
-        # remove wood at the end of flames (using flames map from t - 1)
-        if material == WOOD:
-            map[self._flame_map == 0.1] = 0
 
-    # has be updated before blast strength map
+    # has be updated before blast strength map, because blast strenght map depends on it
     def _update_bomb_map(self, observation):
         self._bomb_history_map = self._bomb_map.copy()
 
@@ -130,13 +143,23 @@ class FeatureEngineer:
         self._hidden_blast_strength_map[top:bottom, left:right] = observation["bomb_blast_strength"][top:bottom,
                                                                   left:right]
 
+
     # has to be updated before blast strength map because it needs to work with blast strength map at T-1
     def _update_flame_map(self, observation):
         # flame map is a continuation of blast strength map
-        # it takes blast strenght map from previous timestep and maps exploded squares to 0.9
-        # it then takes values of 0.9, 0.3 or 0.1 based on flame time left
-        self._flame_map = np.where(self._flame_map > 0.1, self._flame_map / 3, 0)
-        self._flame_map[self._blast_strength_map == 0.9] = 0.9
+        # flame is first on maps 1,2,3 and then 1,2 and then 1
+
+        self._flame_map_1 = np.zeros(BOARD_SIZE)
+        self._flame_map_1[self._flame_map_2 == 1] = 1
+
+        self._flame_map_2 = np.zeros(BOARD_SIZE)
+        self._flame_map_2[self._flame_map_3 == 1] = 1
+
+        self._flame_map_3 = np.zeros(BOARD_SIZE)
+
+        self._flame_map_1[self._blast_strength_map == 0.9] = 1
+        self._flame_map_2[self._blast_strength_map == 0.9] = 1
+        self._flame_map_3[self._blast_strength_map == 0.9] = 1
 
         # gets boundries of agents' field of view
         top, bottom, left, right = self._get_fov_boundries(observation)
@@ -144,32 +167,34 @@ class FeatureEngineer:
         # gets the visible part of the board
         fov = observation["flame_life"][top:bottom, left:right]
 
-        # maps the squares in fov into 0.9, 0.3, 0.1 and 0
-        filtered_fov = np.where(fov > 0, 0.9 / 3 ** (3 - fov), 0)
-
         # rewrites visible part of the map with updated mappings
-        self._flame_map[top:bottom, left:right] = filtered_fov
+        self._flame_map_1[top:bottom, left:right] = np.where(fov > 0, 1, 0)
+        self._flame_map_2[top:bottom, left:right] = np.where(fov > 1, 1, 0)
+        self._flame_map_3[top:bottom, left:right] = np.where(fov > 2, 1, 0)
 
-    def _update_blast_strength_map(self):
+
+    def _update_blast_strength_maps(self):
         # blast strength map always starts with a clean slate and just maps the current bomb map
         # to the expected explosion radius based on a hidden map called _hidden_blast_strength_map
         # (it calculates chained explosions etc, and the squares' values are a count up from 0.1 to 0.9)
-        # (1 represents the explosion and is not shown on this map
+        # (1 represents the explosion and is not shown on this map)
 
         # clear explosions that happened unexpectedly
         self._blast_strength_map = np.zeros(BOARD_SIZE)
 
-        row = np.where(self._bomb_map > 0)[0]
-        col = np.where(self._bomb_map > 0)[1]
+        row, col = np.where(self._bomb_map > 0)
 
         # [row, col, blast strength, life]
         bombs = []
         for i in range(len(col)):
             bombs.append([row[i], col[i], int(self._hidden_blast_strength_map[row[i], col[i]] - 1),
                           self._bomb_map[row[i], col[i]]])
+
+        # sorts bombs by bomb life
+        # (biggest value first, because those bombs explode first and might be chained to other bombs,
+        # whose life then I have to adjust)
         bombs.sort(key=lambda tup: tup[3], reverse=True)
 
-        # print(bombs)
         # creates expected blast radius & time for all bombs (including chaining explosions etc)
         while bombs:
             bomb_range = bombs[0][2]
@@ -181,50 +206,57 @@ class FeatureEngineer:
             def _check4bomb(row, col, bomb_life):
                 self._blast_strength_map[row, col] = bomb_life
                 if self._bomb_map[row, col] > 0:
-                    # print(self._bomb_map)
-                    # print(np.where(self._bomb_map > 0))
-                    # print(bombs, flush=True)
-                    # print(row, col)
                     i = [i for i in range(len(bombs)) if bombs[i][0] == row and bombs[i][1] == col]
                     if i:
                         bombs[i[0]][3] = bomb_life
 
-            row, col = bombs[0][0], bombs[0][1] + 1
-            a = 0
             # while in the map and in range and not on a stone square and while the previous square wasn't wood
             # right
+            row, col = bombs[0][0], bombs[0][1] + 1
+            a = 0
             while col < BOARD_SIZE[1] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[
                 row, col - 1] != 1:
                 _check4bomb(row, col, bomb_life)
                 col += 1
                 a += 1
 
+            # left
             row, col = bombs[0][0], bombs[0][1] - 1
             a = 0
-            # left
             while col >= 0 and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row, col + 1] != 1:
                 _check4bomb(row, col, bomb_life)
                 col -= 1
                 a += 1
 
+            # down
             row, col = bombs[0][0] + 1, bombs[0][1]
             a = 0
-            # down
             while row < BOARD_SIZE[0] and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[
                 row - 1, col] != 1:
                 _check4bomb(row, col, bomb_life)
                 row += 1
                 a += 1
 
+            # up
             row, col = bombs[0][0] - 1, bombs[0][1]
             a = 0
-            # up
             while row >= 0 and self._stone_map[row, col] != 1 and bomb_range > a and self._wood_map[row + 1, col] != 1:
                 _check4bomb(row, col, bomb_life)
                 row -= 1
                 a += 1
 
             bombs.pop(0)
+
+        # code up there in this function is a clusterfuck, so I will just ignore it
+        # and build the new bomb blast strength system based on the map that it creates:
+
+        self._blast_strength_map_6 = np.where(self._blast_strength_map > 0.5, 1, 0)
+        self._blast_strength_map_7 = np.where(self._blast_strength_map > 0.6, 1, 0)
+        self._blast_strength_map_8 = np.where(self._blast_strength_map > 0.7, 1, 0)
+        self._blast_strength_map_9 = np.where(self._blast_strength_map > 0.8, 1, 0)
+
+        self._blast_strength_map = np.where(self._blast_strength_map > 0.5, 1, self._blast_strength_map * 2)
+
 
     def _update_players_map(self, observation, player_map, player):
         # player maps are maps where the known position of a player is represented by "1" and all other board
@@ -240,9 +272,11 @@ class FeatureEngineer:
             player_map[observation["board"] == observation[ENEMIES][0].value] = 1
             player_map[observation["board"] == observation[ENEMIES][1].value] = 1
 
+
     def _update_fog_map(self, observation):
         # just a fucking fog map
         self._fog_map = np.where(observation["board"] == FOG, 1, 0)
+
 
     def get_features(self, observation, messages=((0, 0), (0, 0))):
         self._update_materials_map(observation, self._wood_map, WOOD)
@@ -256,7 +290,7 @@ class FeatureEngineer:
         self._update_fog_map(observation)
         self._update_bomb_map(observation)
         self._update_flame_map(observation)
-        self._update_blast_strength_map()
+        self._update_blast_strength_maps()
         self._update_status_maps(observation)
         if self.CN is not None:
             self._update_chat_features_map(messages)
@@ -272,15 +306,21 @@ class FeatureEngineer:
         self._features[:, :, :, 8] = self._fog_map
         self._features[:, :, :, 9] = self._bomb_map
         self._features[:, :, :, 10] = self._bomb_history_map
-        self._features[:, :, :, 11] = self._flame_map
-        self._features[:, :, :, 12] = self._blast_strength_map
-        self._features[:, :, :, 13] = self._ammo1_map
-        self._features[:, :, :, 14] = self._ammo2_map
-        self._features[:, :, :, 15] = self._ammo3_map
-        self._features[:, :, :, 16] = self._ammo4_map
-        self._features[:, :, :, 17] = self._blast1_map
-        self._features[:, :, :, 18] = self._blast2_map
-        self._features[:, :, :, 19] = self._kick_map
-        self._features[:, :, :, 20:24] = self._chat_features_map
+        self._features[:, :, :, 11] = self._flame_map_1
+        self._features[:, :, :, 12] = self._flame_map_2
+        self._features[:, :, :, 13] = self._flame_map_3
+        self._features[:, :, :, 14] = self._blast_strength_map
+        self._features[:, :, :, 15] = self._blast_strength_map_6
+        self._features[:, :, :, 16] = self._blast_strength_map_7
+        self._features[:, :, :, 17] = self._blast_strength_map_8
+        self._features[:, :, :, 18] = self._blast_strength_map_9
+        self._features[:, :, :, 19] = self._ammo1_map
+        self._features[:, :, :, 20] = self._ammo2_map
+        self._features[:, :, :, 21] = self._ammo3_map
+        self._features[:, :, :, 22] = self._ammo4_map
+        self._features[:, :, :, 23] = self._blast1_map
+        self._features[:, :, :, 24] = self._blast2_map
+        self._features[:, :, :, 25] = self._kick_map
+        self._features[:, :, :, 26:30] = self._chat_features_map
 
         return self._features
