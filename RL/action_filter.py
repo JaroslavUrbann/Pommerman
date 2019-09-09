@@ -10,7 +10,7 @@ def apply_action_filter(action_filter, probabilities):
         i += 1
         if i == len(indices):
             return None
-    return probabilities[indices[i]]
+    return indices[i]
 
 
 def get_action_filter(position, features):
