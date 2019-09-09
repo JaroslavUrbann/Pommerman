@@ -31,19 +31,17 @@ class ChatNetwork:
             self.weights.Upload()
 
     def init_model(self):
-        l2const = 1e-4
-
         x = Input(shape=(3, 3, CHAT_HISTORY_LENGTH))
-        layer = Conv2D(256, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(x)
-        layer = Conv2D(256, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
+        layer = Conv2D(256, 3, padding="same", activation="relu")(x)
+        layer = Conv2D(256, 3, padding="same", activation="relu")(layer)
         layer = UpSampling2D()(layer)
-        layer = Conv2D(128, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
-        layer = Conv2D(128, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
+        layer = Conv2D(128, 3, padding="same", activation="relu")(layer)
+        layer = Conv2D(128, 3, padding="same", activation="relu")(layer)
         layer = UpSampling2D()(layer)
         layer = Cropping2D(cropping=((0, 1), (0, 1)))(layer)
-        layer = Conv2D(64, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
-        layer = Conv2D(16, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
-        y = Conv2D(4, 3, padding="same", activation="relu", kernel_regularizer=l2(l2const))(layer)
+        layer = Conv2D(64, 3, padding="same", activation="relu")(layer)
+        layer = Conv2D(16, 3, padding="same", activation="relu")(layer)
+        y = Conv2D(4, 3, padding="same", activation="relu")(layer)
 
         model = tf.keras.models.Model(inputs=x, outputs=y)
         self.model = model

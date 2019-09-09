@@ -75,66 +75,35 @@ class Network:
         pass
 
     def init_model(self):
-        l2const = 1e-4
 
         x = Input(shape=(11, 11, N_FEATURES))
-        layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(x)
-        layer = Activation("relu")(layer)
+        layer = Conv2D(256, 3, padding="same", activation="relu")(x)
         layer = BatchNormalization()(layer)
 
-        for _ in range(5):
+        for _ in range(16):
             res = layer
-            layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
-            layer = Activation("relu")(layer)
+            layer = Conv2D(256, 3, padding="same", activation="relu")(layer)
             layer = BatchNormalization()(layer)
-            layer = Conv2D(256, 3, padding="same", kernel_regularizer=l2(l2const))(layer)
+            layer = Conv2D(256, 3, padding="same")(layer)
             layer = BatchNormalization()(layer)
             layer = Add()([layer, res])
             layer = Activation("relu")(layer)
 
-        y = Conv2D(128, 1, padding="same", kernel_regularizer=l2(l2const))(layer)
-        y = Activation("relu")(y)
-        y = BatchNormalization()(y)
+        y = Conv2D(128, 1, padding="same", activation="relu")(layer)
         y = Flatten()(y)
-        y = Dense(512, kernel_regularizer=l2(l2const))(y)
-        y = Activation("relu")(y)
-        y = BatchNormalization()(y)
-
-        y = Dense(256, kernel_regularizer=l2(l2const))(y)
-        y = Activation("relu")(y)
-        y = BatchNormalization()(y)
-
-        y = Dense(128, kernel_regularizer=l2(l2const))(y)
-        y = Activation("relu")(y)
-        y = BatchNormalization()(y)
-
-        y = Dense(32, kernel_regularizer=l2(l2const))(y)
-        y = Activation("relu")(y)
-        y = BatchNormalization()(y)
-
+        y = Dense(512, activation="relu")(y)
+        y = Dense(256, activation="relu")(y)
+        y = Dense(128, activation="relu")(y)
+        y = Dense(32, activation="relu")(y)
         y = Dense(16, activation="relu")(y)
         y = Dense(N_CLASSES, activation='softmax', name="y")(y)
 
-        message = Conv2D(128, 1, padding="same", kernel_regularizer=l2(l2const))(layer)
-        message = Activation("relu")(message)
-        message = BatchNormalization()(message)
+        message = Conv2D(128, 1, padding="same", activation="relu")(layer)
         message = Flatten()(message)
-        message = Dense(512, kernel_regularizer=l2(l2const))(message)
-        message = Activation("relu")(message)
-        message = BatchNormalization()(message)
-
-        message = Dense(256, kernel_regularizer=l2(l2const))(message)
-        message = Activation("relu")(message)
-        message = BatchNormalization()(message)
-
-        message = Dense(128, kernel_regularizer=l2(l2const))(message)
-        message = Activation("relu")(message)
-        message = BatchNormalization()(message)
-
-        message = Dense(32, kernel_regularizer=l2(l2const))(message)
-        message = Activation("relu")(message)
-        message = BatchNormalization()(message)
-
+        message = Dense(512, activation="relu")(message)
+        message = Dense(256, activation="relu")(message)
+        message = Dense(128, activation="relu")(message)
+        message = Dense(32, activation="relu")(message)
         message = Dense(16, activation="relu")(message)
         message = Dense(N_MESSAGE_BITS, name="message")(message)
 
