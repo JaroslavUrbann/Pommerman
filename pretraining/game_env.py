@@ -29,7 +29,7 @@ def fill_database():
             if state[0]['step_count'] > 100:
                 break
         DB.next_episode()
-        print("database items done: " + str(DB.step_index) + "/" + str(db_size))
+        print("database items done: " + str(DB.step_index) + "/" + str(db_size) + " in time: " + str(time.time() - tim))
     env.close()
     print("-----------------------------------------------------------------------------")
     print("filling db done in: " + str(time.time() - tim))
