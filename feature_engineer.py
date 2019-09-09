@@ -25,6 +25,11 @@ class FeatureEngineer:
         self._bomb_history_map = np.zeros(BOARD_SIZE) # used to possibly show moving direction of bombs
         self._hidden_blast_strength_map = np.zeros(BOARD_SIZE)
         self._blast_strength_map = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_1 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_2 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_3 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_4 = np.zeros(BOARD_SIZE)
+        self._blast_strength_map_5 = np.zeros(BOARD_SIZE)
         self._blast_strength_map_6 = np.zeros(BOARD_SIZE)
         self._blast_strength_map_7 = np.zeros(BOARD_SIZE)
         self._blast_strength_map_8 = np.zeros(BOARD_SIZE)
@@ -253,12 +258,15 @@ class FeatureEngineer:
         # code up there in this function is a clusterfuck, so I will just ignore it
         # and build the new bomb blast strength system based on the map that it creates:
 
+        self._blast_strength_map_1 = np.where(self._blast_strength_map > 0, 1, 0)
+        self._blast_strength_map_2 = np.where(self._blast_strength_map > 0.1, 1, 0)
+        self._blast_strength_map_3 = np.where(self._blast_strength_map > 0.2, 1, 0)
+        self._blast_strength_map_4 = np.where(self._blast_strength_map > 0.3, 1, 0)
+        self._blast_strength_map_5 = np.where(self._blast_strength_map > 0.4, 1, 0)
         self._blast_strength_map_6 = np.where(self._blast_strength_map > 0.5, 1, 0)
         self._blast_strength_map_7 = np.where(self._blast_strength_map > 0.6, 1, 0)
         self._blast_strength_map_8 = np.where(self._blast_strength_map > 0.7, 1, 0)
         self._blast_strength_map_9 = np.where(self._blast_strength_map > 0.8, 1, 0)
-
-        self._blast_strength_map = np.where(self._blast_strength_map > 0.5, 1, self._blast_strength_map * 2)
 
 
     def _update_players_map(self, observation, player_map, player):
@@ -312,18 +320,22 @@ class FeatureEngineer:
         self._features[:, :, :, 11] = self._flame_map_1
         self._features[:, :, :, 12] = self._flame_map_2
         self._features[:, :, :, 13] = self._flame_map_3
-        self._features[:, :, :, 14] = self._blast_strength_map
-        self._features[:, :, :, 15] = self._blast_strength_map_6
-        self._features[:, :, :, 16] = self._blast_strength_map_7
-        self._features[:, :, :, 17] = self._blast_strength_map_8
-        self._features[:, :, :, 18] = self._blast_strength_map_9
-        self._features[:, :, :, 19] = self._ammo1_map
-        self._features[:, :, :, 20] = self._ammo2_map
-        self._features[:, :, :, 21] = self._ammo3_map
-        self._features[:, :, :, 22] = self._ammo4_map
-        self._features[:, :, :, 23] = self._blast1_map
-        self._features[:, :, :, 24] = self._blast2_map
-        self._features[:, :, :, 25] = self._kick_map
-        self._features[:, :, :, 26:30] = self._chat_features_map
+        self._features[:, :, :, 14] = self._blast_strength_map_1
+        self._features[:, :, :, 16] = self._blast_strength_map_2
+        self._features[:, :, :, 17] = self._blast_strength_map_3
+        self._features[:, :, :, 18] = self._blast_strength_map_4
+        self._features[:, :, :, 19] = self._blast_strength_map_5
+        self._features[:, :, :, 20] = self._blast_strength_map_6
+        self._features[:, :, :, 21] = self._blast_strength_map_7
+        self._features[:, :, :, 22] = self._blast_strength_map_8
+        self._features[:, :, :, 23] = self._blast_strength_map_9
+        self._features[:, :, :, 24] = self._ammo1_map
+        self._features[:, :, :, 25] = self._ammo2_map
+        self._features[:, :, :, 26] = self._ammo3_map
+        self._features[:, :, :, 27] = self._ammo4_map
+        self._features[:, :, :, 28] = self._blast1_map
+        self._features[:, :, :, 29] = self._blast2_map
+        self._features[:, :, :, 30] = self._kick_map
+        self._features[:, :, :, 31:35] = self._chat_features_map
 
         return self._features
