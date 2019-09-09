@@ -204,7 +204,10 @@ class FeatureEngineer:
             # writes bomb life to _blast_strength_map
             # and if there is a bomb on this square, it changes its' bomb life in the bombs array
             def _check4bomb(row, col, bomb_life):
-                self._blast_strength_map[row, col] = bomb_life
+                # two bombs could be expected to explode at one square
+                # and so I want to show the earliest possibility of flames (therefore the bigger number)
+                if self._blast_strength_map[row, col] < bomb_life:
+                    self._blast_strength_map[row, col] = bomb_life
                 if self._bomb_map[row, col] > 0:
                     i = [i for i in range(len(bombs)) if bombs[i][0] == row and bombs[i][1] == col]
                     if i:
