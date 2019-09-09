@@ -25,6 +25,12 @@ def get_database():
     return x, y
 
 
+def set_database(x_, y_):
+    global x, y
+    x = x_
+    y = y_
+
+
 def next_episode():
     global feature_engineers
     feature_engineers = [FeatureEngineer(), FeatureEngineer(), FeatureEngineer(), FeatureEngineer()]
