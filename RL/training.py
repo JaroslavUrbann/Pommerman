@@ -150,7 +150,7 @@ def training_step(agent_features, id, step, position):
 
         add_message(msg, id)
 
-        action_filter = AF.get_action_filter(position, features)
+        action_filter = AF.get_action_filter(position[0], position[1], features)
         action = AF.apply_action_filter(action_filter, actions[0])
 
         # if all actions result in a certain death, don't compute gradients and just return 0
