@@ -2,13 +2,6 @@ import numpy as np
 from constants import *
 from feature_engineer import FeatureEngineer
 
-database_size = 0
-step_index = 0
-
-x = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
-y = np.zeros((database_size, N_CLASSES), dtype="float32")
-feature_engineers = [None, None, None, None]
-
 
 def create_database(db_size):
     global x, y, feature_engineers, step_index, database_size

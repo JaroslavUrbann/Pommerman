@@ -1,11 +1,13 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, Activation, BatchNormalization
 from tensorflow.python.keras.regularizers import l2
+from RL import action_filter as AF
 from constants import *
 import matplotlib.pyplot as plt
 from pretraining import DB
 import pandas
 import numpy as np
+import time
 
 
 class Network:
@@ -119,12 +121,19 @@ class Network:
         self.history = self.model.fit(x, [y, y], validation_split=0.1,
                                       epochs=n_epochs).history
 
-    def predict(self, x):
-        actions, message = self.model.predict(x)
-        a = np.argmax(actions)
+    def predict(self, features, position=None):
+        actions, message = self.model.predict(features)
+        # applies action filter
+        if position is not None:
+            action_filter = AF.get_action_filter(position[0], position[1], features)
+            a = AF.apply_action_filter(action_filter, actions[0])
+            if a is None:
+                a = 0
+        else:
+            a = np.argmax(actions)
         sigmoid = lambda x: 1 / (1 + np.exp(-x))
         message = sigmoid(message[0])
-        binary = "".join(str(int(m // 0.5)) for m in message)
+        binary = "".join(str(min(1, int(m // 0.5))) for m in message)
         dec = int(binary, 2)
         msg = (dec // 8 + 1, dec % 8 + 1)
         return a, msg

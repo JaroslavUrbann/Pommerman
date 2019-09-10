@@ -1,4 +1,5 @@
 import tensorflow as tf
+from constants import *
 
 
 # check a square is surrounded by unmovable blocks
@@ -21,9 +22,9 @@ def is_square_blocked(row, col, features, direction):
     # is there wood or stone?
     if features[0, row, col, 0] == 1 or features[0, row, col, 1] == 1:
         return True
-    # is there a bomb and the agent can't kick or is the space behind it (according to direction) blocked?
+    # is there a bomb and the agent can't kick or is there a bomb and the space behind it (according to direction) blocked?
     # if there are 2 bombs after each other, this breaks, since you can't push two bombs at the same time
-    if features[0, row, col, 9] > 0 and features[0, row, col, 30][0] == 0 or is_square_blocked(row, col, features, direction):
+    if features[0, row, col, 9] > 0 and (features[0, row, col, 30] == 0 or is_square_blocked(row, col, features, direction)):
         return True
     return False
 
@@ -31,7 +32,7 @@ def is_square_blocked(row, col, features, direction):
 # returns the first possible action chosen by the model, that doesn't result in a certain death,
 # None, if all actions result in a certain death
 def apply_action_filter(action_filter, probabilities):
-    _, indices = tf.math.top_k(probabilities)
+    _, indices = tf.math.top_k(probabilities, k=N_CLASSES)
     i = 0
     while action_filter[indices[i]] == 0:
         i += 1
@@ -43,10 +44,11 @@ def apply_action_filter(action_filter, probabilities):
 def get_action_filter(row, col, features):
     a0 = is_square_safe(row, col, features)
     a1 = is_square_safe(row - 1, col, features)
-    a2 = is_square_safe(row, col - 1, features)
-    a3 = is_square_safe(row + 1, col, features)
+    a2 = is_square_safe(row + 1, col, features)
+    a3 = is_square_safe(row, col - 1, features)
     a4 = is_square_safe(row, col + 1, features)
     a5 = 0 if features[0, row, col, 9] > 0 else 1
+    # stop, up, down, left, right, place_bomb
     return [a0, a1, a2, a3, a4, a5]
 
 
@@ -67,7 +69,11 @@ def is_square_safe(row, col, features):
     if features[0, row, col, 12] == 1:
         return 0
     # is there a bomb that explodes next timestep?
-    if features[0, row, col, 9] == 0.9:
+    if features[0, row, col, 9] > 0.8:
+        return 0
+    # is there a bomb under the agent, that explodes in t + 2?
+    # doesnt't take into account chaining explosions!!
+    if features[0, row, col, 9] > 0.7 and features[0, row, col, 7] == 1:
         return 0
 
     # is there a bomb and how safe is the space behind it?
@@ -78,7 +84,7 @@ def is_square_safe(row, col, features):
             return 1
         # if the agent isn't standing on top of the bomb (he is standing to the side of it)
         # and can't kick -> not safe (can't go there)
-        if features[0, row, col, 7] != 1 and features[0, row, col, 30][0] == 0:
+        if features[0, row, col, 7] != 1 and features[0, row, col, 30] == 0:
             return 0
         # if the agent is standing to the side of the bomb, can he push it? (is the square behind it safe?)
         if row < 10 and features[0, row + 1, col, 7] == 1:
