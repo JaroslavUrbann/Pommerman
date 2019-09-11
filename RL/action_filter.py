@@ -44,10 +44,10 @@ def apply_action_filter(action_filter, probabilities):
 
 def get_action_filter(row, col, features):
     a0 = is_square_safe(row, col, features, (0, 0))
-    a1 = is_square_safe(row - 1, col, features, (-1, 0))
-    a2 = is_square_safe(row + 1, col, features, (+1, 0))
-    a3 = is_square_safe(row, col - 1, features, (0, -1))
-    a4 = is_square_safe(row, col + 1, features, (0, +1))
+    a1 = is_square_safe(row, col, features, (-1, 0))
+    a2 = is_square_safe(row, col, features, (+1, 0))
+    a3 = is_square_safe(row, col, features, (0, -1))
+    a4 = is_square_safe(row, col, features, (0, +1))
     a5 = 0 if features[0, row, col, 9] > 0 else 1
     # stop, up, down, left, right, place_bomb
     return [a0, a1, a2, a3, a4, a5]
