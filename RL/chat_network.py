@@ -32,15 +32,15 @@ class ChatNetwork:
 
     def init_model(self):
         x = Input(shape=(3, 3, CHAT_HISTORY_LENGTH))
-        layer = Conv2D(256, 3, padding="same", activation="relu")(x)
-        layer = Conv2D(256, 3, padding="same", activation="relu")(layer)
+        # 3 x 3 x 128
+        layer = Conv2D(128, 3, padding="same", activation="relu")(x)
         layer = UpSampling2D()(layer)
-        layer = Conv2D(128, 3, padding="same", activation="relu")(layer)
-        layer = Conv2D(128, 3, padding="same", activation="relu")(layer)
+        # 6 x 6 x 32
+        layer = Conv2D(32, 3, padding="same", activation="relu")(layer)
         layer = UpSampling2D()(layer)
         layer = Cropping2D(cropping=((0, 1), (0, 1)))(layer)
-        layer = Conv2D(64, 3, padding="same", activation="relu")(layer)
-        layer = Conv2D(16, 3, padding="same", activation="relu")(layer)
+        # 11 x 11 x 8
+        layer = Conv2D(8, 3, padding="same", activation="relu")(layer)
         y = Conv2D(4, 3, padding="same", activation="relu")(layer)
 
         model = tf.keras.models.Model(inputs=x, outputs=y)
