@@ -8,8 +8,8 @@ step_index = 0
 x1 = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
 x2 = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
 
-_default_y = np.zeros(N_CLASSES, dtype="float32")
-_default_y[N_CLASSES - 1] = 1
+_default_y = np.zeros(N_ACTIONS, dtype="float32")
+_default_y[N_ACTIONS - 1] = 1
 
 y1 = np.tile(_default_y, (database_size, 1))
 y2 = np.tile(_default_y, (database_size, 1))
@@ -22,8 +22,8 @@ def create_database(db_size):
     x1 = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
     x2 = np.zeros((database_size, 11, 11, N_FEATURES), dtype="float32")
 
-    _default_y = np.zeros(N_CLASSES, dtype="float32")
-    _default_y[N_CLASSES - 1] = 1
+    _default_y = np.zeros(N_ACTIONS, dtype="float32")
+    _default_y[N_ACTIONS - 1] = 1
 
     y1 = np.tile(_default_y, (database_size, 1))
     y2 = np.tile(_default_y, (database_size, 1))
@@ -40,7 +40,7 @@ def add_data(features, action, id):
     if i < database_size:
         if id == 1 or id == 3:
             x1[i] = features
-            y1[i] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)
+            y1[i] = tf.keras.utils.to_categorical(action, num_classes=N_ACTIONS)
         if id == 2 or id == 4:
             x2[i] = features
-            y2[i] = tf.keras.utils.to_categorical(action, num_classes=N_CLASSES)
+            y2[i] = tf.keras.utils.to_categorical(action, num_classes=N_ACTIONS)

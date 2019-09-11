@@ -33,7 +33,7 @@ def is_square_blocked(row, col, features, direction):
 # returns the first possible action chosen by the model, that doesn't result in a certain death,
 # None, if all actions result in a certain death
 def apply_action_filter(action_filter, probabilities):
-    _, indices = tf.math.top_k(probabilities, k=N_CLASSES)
+    _, indices = tf.math.top_k(probabilities, k=N_ACTIONS)
     i = 0
     while action_filter[indices[i]] == 0:
         i += 1

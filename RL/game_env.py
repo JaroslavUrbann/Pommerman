@@ -11,10 +11,10 @@ def train_network(model, chat_model, n_steps, max_time):
 
     T = Training(model, chat_model)
 
-    agent0 = NetworkAgent(0)
-    agent1 = NetworkAgent(1)
-    agent2 = NetworkAgent(2)
-    agent3 = NetworkAgent(3)
+    agent0 = NetworkAgent(0, T)
+    agent1 = NetworkAgent(1, T)
+    agent2 = NetworkAgent(2, T)
+    agent3 = NetworkAgent(3, T)
 
     agent_list = [agent0, agent1, agent2, agent3]
     env = pommerman.make('PommeRadioCompetition-v2', agent_list)
@@ -51,15 +51,15 @@ def train_network(model, chat_model, n_steps, max_time):
 
 class NetworkAgent(BaseAgent):
 
-    def __init__(self, id):
+    def __init__(self, id, T):
         super(NetworkAgent, self).__init__(characters.Bomber)
         self.feature_engineer = FeatureEngineer()
         self.a_id = id
+        self.T = T
 
     def act(self, observation, action_space):
-        global T
         features = self.feature_engineer.get_features(observation)
-        action = T.training_step(features, self.a_id, int(observation["step_count"]), observation["position"])
+        action = self.T.training_step(features, self.a_id, int(observation["step_count"]), observation["position"])
         return action, 0, 0
 
     def episode_end(self, reward):

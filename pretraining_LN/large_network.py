@@ -127,7 +127,7 @@ class LargeNetwork:
         y1 = BatchNormalization()(y1)
 
         y1 = Dense(16, activation="relu")(y1)
-        y1 = Dense(N_CLASSES, activation='softmax', name="agent1")(y1)
+        y1 = Dense(N_ACTIONS, activation='softmax', name="agent1")(y1)
 
         y2 = Conv2D(128, 1, padding="same", kernel_regularizer=l2(l2const))(layer)
         y2 = Activation("relu")(y2)
@@ -150,7 +150,7 @@ class LargeNetwork:
         y2 = BatchNormalization()(y2)
 
         y2 = Dense(16, activation="relu")(y2)
-        y2 = Dense(N_CLASSES, activation='softmax', name="agent2")(y2)
+        y2 = Dense(N_ACTIONS, activation='softmax', name="agent2")(y2)
 
         model = tf.keras.models.Model(inputs=[x1, x2], outputs=[y1, y2])
         model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr=LR),

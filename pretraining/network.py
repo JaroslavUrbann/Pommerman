@@ -98,7 +98,7 @@ class Network:
         y = Dense(128, activation="relu")(y)
         y = Dense(32, activation="relu")(y)
         y = Dense(16, activation="relu")(y)
-        y = Dense(N_CLASSES, activation='softmax', name="y")(y)
+        y = Dense(N_ACTIONS, activation='softmax', name="y")(y)
 
         message = Conv2D(128, 1, padding="same", activation="relu")(layer)
         message = Flatten()(message)
