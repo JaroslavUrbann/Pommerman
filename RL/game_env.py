@@ -34,6 +34,7 @@ def train_network(model, chat_model, n_steps, max_time):
             e_step += 1
 
             died = list(set(alive) - set(state[0]["alive"]))
+            # max 1 person from each team
             died_first += [d-10 for d in died if ((d - 8) % 4) not in died_first]
 
             alive = state[0]["alive"]

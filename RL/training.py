@@ -37,8 +37,11 @@ class Training():
 
     # died_first should ideally have at most 1 player from each team
     def apply_grads(self, won, died_first):
-        # 0.7 if it won but died, -0.7 if lost but didn't die first, else -1/1
-        rewards = [(0.7 if a in died_first else 1) if a in won else -1 if a in died_first else -0.7 for a in range(4)]
+        # 0.5 if it won but died, -0.5 if lost but didn't die first, else -1/1
+        rewards = [(0.5 if a in died_first else 1) if a in won else -1 if a in died_first else -0.5 for a in range(4)]
+
+        # if it is a tie, lower the punishment by 2 times
+        rewards = [r if won else r / 2 for r in rewards]
 
         for var in range(len(self.agents_grads[0])):
             grads_agent_0 = self.agents_grads[0][var] * rewards[0]
@@ -58,8 +61,7 @@ class Training():
         self.optimizer.apply_gradients(zip(self.chats_grads[0], self.chat_model.trainable_variables))
 
     def end_episode(self, won, died_first):
-        if won:
-            self.apply_grads(won, died_first)
+        self.apply_grads(won, died_first)
         self.reset_grads()
 
         # this timestep + 32 previous timesteps
@@ -120,8 +122,8 @@ class Training():
         grads = tf.reduce_sum(abs_grads, [0, 1, 2])
         sizes, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
 
-        #         al = 0
-        #         siz = 0.1
+        # al = 0
+        # siz = 0.1
         for i in range(N_BP_MESSAGES):
             # if the message has even index, its this agent's, otherwise its his teammates
             msg_agent_id = (id + (indexes[i] % 2) * 2) % 4
@@ -138,15 +140,15 @@ class Training():
             m_g, c_m_g = self.tapes[msg_agent_id][msg_id].gradient(msg, [self.model.trainable_variables,
                                                                          self.chat_model.trainable_variables])
 
-            #             for i in range(len(m_g)):
-            #                 if m_g[i] is not None:
-            #                     al += np.sum(np.absolute(m_g[i]))
-            #                     siz += np.array(m_g[i]).size
+            # for i in range(len(m_g)):
+            #     if m_g[i] is not None:
+            #         al += np.sum(np.absolute(m_g[i]))
+            #         siz += np.array(m_g[i]).size
 
             model_grads = self.add_grads(model_grads, m_g)
             chat_model_grads = self.add_grads(chat_model_grads, c_m_g)
 
-        #         print(al/siz)
+        # print(al / siz)
         return model_grads, chat_model_grads
 
     def training_step(self, agent_features, id, step, position):
@@ -187,13 +189,13 @@ class Training():
                                                                              self.chat_model.trainable_variables,
                                                                              chat])
         h = time.time() - tim
-        #         al = 0
-        #         siz = 0
-        #         for i in range(len(model_grads)):
-        #             if model_grads[i] is not None:
-        #                 al += np.sum(np.absolute(model_grads[i]))
-        #                 siz += np.array(model_grads[i]).size
-        #         print(al/siz, "-------------------")
+        # al = 0
+        # siz = 0
+        # for i in range(len(model_grads)):
+        #     if model_grads[i] is not None:
+        #         al += np.sum(np.absolute(model_grads[i]))
+        #         siz += np.array(model_grads[i]).size
+        # print(al / siz, "-------------------")
 
         tim = time.time()
         model_grads, chat_model_grads = self.backprop_chat(chat_grads, model_grads, chat_model_grads, id)
