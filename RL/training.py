@@ -135,7 +135,7 @@ class Training():
             with self.tapes[msg_agent_id][msg_id]:
                 # multiplied by an arbitrary number to combat vanishing gradient by upscaling everything to roughly
                 # the same scale as the first model backprop
-                msg = self.messages[msg_agent_id][msg_id] * chat_grads[:, :, :, indexes[i]] * 1e3
+                msg = self.messages[msg_agent_id][msg_id] * chat_grads[:, :, :, indexes[i]] * 1e4
 
             m_g, c_m_g = self.tapes[msg_agent_id][msg_id].gradient(msg, [self.model.trainable_variables,
                                                                          self.chat_model.trainable_variables])
