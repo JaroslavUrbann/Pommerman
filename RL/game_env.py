@@ -2,14 +2,14 @@ import pommerman
 from feature_engineer import FeatureEngineer
 from pommerman.agents import BaseAgent
 from pommerman import characters
-from RL import training as T
+from RL.training import Training
 import time
 
 
 def train_network(model, chat_model, n_steps, max_time):
     tr = time.time()
 
-    T.init_training(model, chat_model)
+    T = Training(model, chat_model)
 
     agent0 = NetworkAgent(0)
     agent1 = NetworkAgent(1)
@@ -57,6 +57,7 @@ class NetworkAgent(BaseAgent):
         self.a_id = id
 
     def act(self, observation, action_space):
+        global T
         features = self.feature_engineer.get_features(observation)
         action = T.training_step(features, self.a_id, int(observation["step_count"]), observation["position"])
         return action, 0, 0
