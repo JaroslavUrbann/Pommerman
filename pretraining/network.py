@@ -79,7 +79,8 @@ class Network:
     def init_model(self):
 
         x = Input(shape=(11, 11, N_FEATURES))
-        layer = x
+        layer = Conv2D(128, 3, padding="same", activation="relu")(x)
+
         for _ in range(2):
             res = layer
             layer = Conv2D(128, 3, padding="same", activation="relu")(layer)
