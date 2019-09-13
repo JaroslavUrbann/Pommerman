@@ -6,10 +6,10 @@ from RL.training import Training
 import time
 
 
-def train_network(model, chat_model, n_steps, max_time):
+def train_network(models, chat_model, n_steps, max_time):
     tr = time.time()
 
-    T = Training(model, chat_model)
+    T = Training(models, chat_model)
 
     agent0 = NetworkAgent(0, T)
     agent1 = NetworkAgent(1, T)
@@ -52,15 +52,15 @@ def train_network(model, chat_model, n_steps, max_time):
 
 class NetworkAgent(BaseAgent):
 
-    def __init__(self, id, T):
+    def __init__(self, a_id, T):
         super(NetworkAgent, self).__init__(characters.Bomber)
         self.feature_engineer = FeatureEngineer()
-        self.a_id = id
+        self.a_id = a_id
         self.T = T
 
     def act(self, observation, action_space):
         features = self.feature_engineer.get_features(observation)
-        action = self.T.training_step(features, self.a_id, int(observation["step_count"]), observation["position"])
+        action = self.T.training_step(features, self.a_id, observation["position"])
         return action, 0, 0
 
     def episode_end(self, reward):
