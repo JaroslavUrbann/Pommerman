@@ -40,14 +40,16 @@ def main():
     for i_episode in range(1):
         state = env.reset()
         done = False
+        feature_engineer = FeatureEngineer()
         while not done:
             i += 1
             env.render()
             actions = env.act(state)
-            # print(state[3]["ammo"])
+            # print(state[3]["bomb_life"])
             state, reward, done, info = env.step(actions)
             # print(done)
-            # print(info["result"].value)
+            xd = feature_engineer.get_features(state[3])
+            # print(xd[0, :, :, 9])
             # if i == 300:
             # break
             # print(info)
@@ -61,7 +63,9 @@ class TestAgent(BaseAgent):
     feature_engineer = FeatureEngineer()
 
     def act(self, observation, action_space):
-        xd = self.feature_engineer.get_features(observation)
+        # xd = self.feature_engineer.get_features(observation)
+        # print(xd[0, :, :, 9])
+        # print(observation["bomb_life"])
         # print(xd[0, :, :, 0])
         # print(".........")
         # print(xd[0, :, :, 11])
@@ -77,5 +81,6 @@ class TestAgent(BaseAgent):
         # print(observation)
         return 0 #random.randint(0, 4), random.randint(0, 4), random.randint(0, 4)
 
-
+    def episode_end(self, reward):
+        print(reward)
 main()

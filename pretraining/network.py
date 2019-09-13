@@ -1,10 +1,8 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Add, Conv2D, Dense, Flatten, Input, Activation, BatchNormalization
-from tensorflow.python.keras.regularizers import l2
 from RL import action_filter as AF
 from constants import *
 import matplotlib.pyplot as plt
-from pretraining import DB
 import pandas
 import numpy as np
 import time
@@ -107,8 +105,7 @@ class Network:
                       loss_weights=[1., 0.])
         self.model = model
 
-    def train_model_on_database(self, n_epochs):
-        x, y = DB.get_database()
+    def train_model(self, x, y, n_epochs):
         self.n_samples = y.shape[0]
         self.history = self.model.fit(x, [y, y], validation_split=0.1,
                                       epochs=n_epochs).history
