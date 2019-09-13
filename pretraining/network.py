@@ -20,9 +20,10 @@ class Network:
         self.drive = drive
 
     def load_model(self):
-        self.weights = self.drive.CreateFile({'id': self.model_id})
-        self.weights.GetContentFile(self.weights["title"])
-        self.model = tf.keras.models.load_model(self.weights["title"])
+        if self.model_id is not None:
+            self.weights = self.drive.CreateFile({'id': self.model_id})
+            self.weights.GetContentFile(self.weights["title"])
+            self.model = tf.keras.models.load_model(self.weights["title"])
 
     # uploads new weights if name is given, otherwise updates weights that were downloaded in load_model
     def upload_model(self):
@@ -110,12 +111,12 @@ class Network:
         self.history = self.model.fit(x, [y, y], validation_split=0.1,
                                       epochs=n_epochs).history
 
-    def predict(self, features, position=None):
+    def predict(self, features, position=None, randomness=1):
         actions, message = self.model.predict(features)
         # applies action filter
         if position is not None:
             action_filter = AF.get_action_filter(position[0], position[1], features)
-            a = AF.apply_action_filter(action_filter, actions[0])
+            a = AF.apply_action_filter(action_filter, actions[0], randomness)
             if a is None:
                 a = 0
         else:

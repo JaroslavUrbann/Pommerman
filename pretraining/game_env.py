@@ -37,7 +37,7 @@ def fill_database(DB1, DB2, DB3):
         DB1.next_episode()
         DB2.next_episode()
         DB3.next_episode()
-        print("database items done: " + str(DB1.step_index) + " | " + str(DB2.step_index) + " | " + str(DB3.step_index) + "/" + str(DB1.size) + " | " + str(DB2.size) + " | " + str(DB3.size) + " in time: " + str(int(time.time() - tim)))
+        print("database items done:", str(DB1.step_index), "/", str(DB1.size), "|", str(DB2.step_index), "/", str(DB2.size), "|", str(DB3.step_index), "/", str(DB3.size), "in time:", str(int(time.time() - tim)))
     env.close()
     print("-----------------------------------------------------------------------------")
     print("filling db done in: " + str(time.time() - tim))

@@ -14,9 +14,10 @@ class ChatNetwork:
         self.drive = drive
 
     def load_model(self):
-        self.weights = self.drive.CreateFile({'id': self.model_id})
-        self.weights.GetContentFile(self.weights["title"])
-        self.model = tf.keras.models.load_model(self.weights["title"])
+        if self.model_id is not None:
+            self.weights = self.drive.CreateFile({'id': self.model_id})
+            self.weights.GetContentFile(self.weights["title"])
+            self.model = tf.keras.models.load_model(self.weights["title"])
 
     # uploads new weights if name is given, otherwise updates weights that were downloaded in load_model
     def upload_model(self):

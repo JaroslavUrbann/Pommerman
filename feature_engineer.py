@@ -20,6 +20,9 @@ class FeatureEngineer:
         self._agent_map = np.zeros(BOARD_SIZE)
         self._teammate_map = np.zeros(BOARD_SIZE)
         self._enemies_map = np.zeros(BOARD_SIZE)
+        self._agent_history_map = np.zeros(BOARD_SIZE)
+        self._teammate_history_map = np.zeros(BOARD_SIZE)
+        self._enemies_history_map = np.zeros(BOARD_SIZE)
 
         self._bomb_map = np.zeros(BOARD_SIZE)
         self._bomb_history_map = np.zeros(BOARD_SIZE) # used to possibly show moving direction of bombs
@@ -269,19 +272,31 @@ class FeatureEngineer:
         self._blast_strength_map_9 = np.where(self._blast_strength_map > 0.8, 1, 0)
 
 
-    def _update_players_map(self, observation, player_map, player):
-        # player maps are maps where the known position of a player is represented by "1" and all other board
-        # values are discounted by PLAYER_DECAY every round no matter what
-        # This is a controversial decision and these "historical values" might be turned off entirely in the future
-        player_map *= PLAYER_DECAY
-        if player == AGENT:
-            # player_map = np.zeros(BOARD_SIZE)
-            player_map[observation["position"][0], observation["position"][1]] = 1
-        if player == TEAMMATE:
-            player_map[observation["board"] == observation[TEAMMATE].value] = 1
-        if player == ENEMIES:
-            player_map[observation["board"] == observation[ENEMIES][0].value] = 1
-            player_map[observation["board"] == observation[ENEMIES][1].value] = 1
+    def _update_players_map(self, observation):
+        # player maps are maps where the known position of a player is represented by "1"
+        # historical positions are represented with 1 to 0.1 (1 is current position, 0.1 is ten steps back)
+
+        # current positions
+        self._agent_map = np.zeros(BOARD_SIZE)
+        self._agent_map[observation["position"][0], observation["position"][1]] = 1
+
+        self._teammate_map = np.zeros(BOARD_SIZE)
+        self._teammate_map[observation["board"] == observation[TEAMMATE].value] = 1
+
+        self._enemies_map = np.zeros(BOARD_SIZE)
+        self._enemies_map[observation["board"] == observation[ENEMIES][0].value] = 1
+        self._enemies_map[observation["board"] == observation[ENEMIES][1].value] = 1
+
+        # historical positions
+        self._agent_history_map = np.where(self._agent_history_map > 0.1, self._agent_history_map - 0.1, 0)
+        self._agent_history_map[observation["position"][0], observation["position"][1]] = 1
+
+        self._teammate_history_map = np.where(self._teammate_history_map > 0.1, self._teammate_history_map - 0.1, 0)
+        self._teammate_history_map[observation["board"] == observation[TEAMMATE].value] = 1
+
+        self._enemies_history_map = np.where(self._enemies_history_map > 0.1, self._enemies_history_map - 0.1, 0)
+        self._enemies_history_map[observation["board"] == observation[ENEMIES][0].value] = 1
+        self._enemies_history_map[observation["board"] == observation[ENEMIES][1].value] = 1
 
 
     def _update_fog_map(self, observation):
@@ -295,9 +310,7 @@ class FeatureEngineer:
         self._update_materials_map(observation, self._ammo_powerup_map, AMMO_POWERUP)
         self._update_materials_map(observation, self._range_powerup_map, RANGE_POWERUP)
         self._update_materials_map(observation, self._kick_powerup_map, KICK_POWERUP)
-        self._update_players_map(observation, self._enemies_map, ENEMIES)
-        self._update_players_map(observation, self._teammate_map, TEAMMATE)
-        self._update_players_map(observation, self._agent_map, AGENT)
+        self._update_players_map(observation)
         self._update_fog_map(observation)
         self._update_bomb_map(observation)
         self._update_flame_map(observation)
@@ -311,31 +324,34 @@ class FeatureEngineer:
         self._features[:, :, :, 2] = self._ammo_powerup_map
         self._features[:, :, :, 3] = self._range_powerup_map
         self._features[:, :, :, 4] = self._kick_powerup_map
-        self._features[:, :, :, 5] = self._enemies_map
+        self._features[:, :, :, 5] = self._agent_map
         self._features[:, :, :, 6] = self._teammate_map
-        self._features[:, :, :, 7] = self._agent_map
-        self._features[:, :, :, 8] = self._fog_map
-        self._features[:, :, :, 9] = self._bomb_map
-        self._features[:, :, :, 10] = self._bomb_history_map
-        self._features[:, :, :, 11] = self._flame_map_1
-        self._features[:, :, :, 12] = self._flame_map_2
-        self._features[:, :, :, 13] = self._flame_map_3
-        self._features[:, :, :, 14] = self._blast_strength_map_1
-        self._features[:, :, :, 16] = self._blast_strength_map_2
-        self._features[:, :, :, 17] = self._blast_strength_map_3
-        self._features[:, :, :, 18] = self._blast_strength_map_4
-        self._features[:, :, :, 19] = self._blast_strength_map_5
-        self._features[:, :, :, 20] = self._blast_strength_map_6
-        self._features[:, :, :, 21] = self._blast_strength_map_7
-        self._features[:, :, :, 22] = self._blast_strength_map_8
-        self._features[:, :, :, 23] = self._blast_strength_map_9
-        self._features[:, :, :, 24] = self._ammo1_map
-        self._features[:, :, :, 25] = self._ammo2_map
-        self._features[:, :, :, 26] = self._ammo3_map
-        self._features[:, :, :, 27] = self._ammo4_map
-        self._features[:, :, :, 28] = self._blast1_map
-        self._features[:, :, :, 29] = self._blast2_map
-        self._features[:, :, :, 30] = self._kick_map
-        self._features[:, :, :, 31:35] = self._chat_features_map
+        self._features[:, :, :, 7] = self._enemies_map
+        self._features[:, :, :, 8] = self._agent_history_map
+        self._features[:, :, :, 9] = self._teammate_history_map
+        self._features[:, :, :, 10] = self._enemies_history_map
+        self._features[:, :, :, 11] = self._fog_map
+        self._features[:, :, :, 12] = self._bomb_map
+        self._features[:, :, :, 13] = self._bomb_history_map
+        self._features[:, :, :, 14] = self._flame_map_1
+        self._features[:, :, :, 15] = self._flame_map_2
+        self._features[:, :, :, 16] = self._flame_map_3
+        self._features[:, :, :, 17] = self._blast_strength_map_1
+        self._features[:, :, :, 18] = self._blast_strength_map_2
+        self._features[:, :, :, 19] = self._blast_strength_map_3
+        self._features[:, :, :, 20] = self._blast_strength_map_4
+        self._features[:, :, :, 21] = self._blast_strength_map_5
+        self._features[:, :, :, 22] = self._blast_strength_map_6
+        self._features[:, :, :, 23] = self._blast_strength_map_7
+        self._features[:, :, :, 24] = self._blast_strength_map_8
+        self._features[:, :, :, 25] = self._blast_strength_map_9
+        self._features[:, :, :, 26] = self._ammo1_map
+        self._features[:, :, :, 27] = self._ammo2_map
+        self._features[:, :, :, 28] = self._ammo3_map
+        self._features[:, :, :, 29] = self._ammo4_map
+        self._features[:, :, :, 30] = self._blast1_map
+        self._features[:, :, :, 31] = self._blast2_map
+        self._features[:, :, :, 32] = self._kick_map
+        self._features[:, :, :, 33:37] = self._chat_features_map
 
         return self._features
