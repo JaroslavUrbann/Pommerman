@@ -131,8 +131,8 @@ class Training:
         grads = tf.reduce_sum(abs_grads, [0, 1, 2])
         sizes, indexes = tf.math.top_k(grads, k=N_BP_MESSAGES)
 
-        # al = 0
-        # siz = 0.1
+        al = 0
+        siz = 0.1
         for i in range(N_BP_MESSAGES):
             # if the message has even index, its this agent's, otherwise its his teammates
             msg_agent_id = (id + (indexes[i] % 2) * 2) % 4
@@ -155,11 +155,11 @@ class Training:
                                                                             self.chat_model.trainable_variables])
 
             self.save_grads(m_g, c_m_g, m_i, msg_agent_id, weight=0.5/N_BP_MESSAGES)
-            # for i in range(len(m_g)):
-            #     if m_g[i] is not None:
-            #         al += np.sum(np.absolute(m_g[i]))
-            #         siz += np.array(m_g[i]).size
-        # print(al / siz)
+            for i in range(len(m_g)):
+                if m_g[i] is not None:
+                    al += np.sum(np.absolute(m_g[i]))
+                    siz += np.array(m_g[i]).size
+        print(al / siz)
 
 
     def training_step(self, agent_features, a_id, position):
@@ -186,7 +186,8 @@ class Training:
 
             tim = time.time()
             action_filter = AF.get_action_filter(position[0], position[1], features)
-            action = AF.apply_action_filter(action_filter, actions[0])
+            randomness = 10 if self.step > 300 else 1
+            action = AF.apply_action_filter(action_filter, actions[0], randomness=randomness)
             d = time.time() - tim
 
             # if all actions result in a certain death, don't compute gradients and just return 0
@@ -202,13 +203,13 @@ class Training:
                                                                              self.chat_model.trainable_variables,
                                                                              chat])
         h = time.time() - tim
-        # al = 0
-        # siz = 0
-        # for i in range(len(model_grads)):
-        #     if model_grads[i] is not None:
-        #         al += np.sum(np.absolute(model_grads[i]))
-        #         siz += np.array(model_grads[i]).size
-        # print(al / siz, "-------------------")
+        al = 0
+        siz = 0
+        for i in range(len(model_grads)):
+            if model_grads[i] is not None:
+                al += np.sum(np.absolute(model_grads[i]))
+                siz += np.array(model_grads[i]).size
+        print(al / siz, "-------------------")
 
         tim = time.time()
         self.backprop_chat(chat_grads, a_id)
