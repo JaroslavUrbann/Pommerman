@@ -106,7 +106,7 @@ class Network:
                       loss_weights=[1., 0.])
         self.model = model
 
-    def train_model(self, x, y, n_epochs):
+    def train(self, x, y, n_epochs):
         self.n_samples = y.shape[0]
         self.history = self.model.fit(x, [y, y], validation_split=0.1,
                                       epochs=n_epochs).history
