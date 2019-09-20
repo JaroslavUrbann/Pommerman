@@ -126,6 +126,7 @@ class Network:
         binary = "".join(str(min(1, int(m // 0.5))) for m in message)
         dec = int(binary, 2)
         msg = (dec // 8 + 1, dec % 8 + 1)
+        tf.keras.backend.clear_session()
         return a, msg
 
     def plot_csv(self):

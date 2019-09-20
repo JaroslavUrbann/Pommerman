@@ -20,3 +20,5 @@ N_FEATURES = N_MAP_FEATURES + N_MSG_FEATURES
 N_MESSAGE_BITS = 6
 CHAT_HISTORY_LENGTH = 64  # number of messages from each agent * 2
 N_BP_MESSAGES = 1
+# update model weights every 32 episodes
+RL_UPDATE_FREQUENCY = 32

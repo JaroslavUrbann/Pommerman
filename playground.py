@@ -21,13 +21,13 @@ def main():
         # agents.SimpleAgent(),
         # agents.SimpleAgent(),
         # DockerAgent("multiagentlearning/hakozakijunctions", 80)
-        # TestAgent(),
+        TestAgent(),
         TestAgent(),
         TestAgent(),
         TestAgent(),
         # agents.RandomAgent(),
         # agents.RandomAgent(),
-        agents.PlayerAgent(agent_control="arrows")
+        # agents.PlayerAgent(agent_control="arrows")
         # DockerAgent("multiagentlearning/navocado", port=81),
     ]
 
@@ -65,7 +65,7 @@ class TestAgent(BaseAgent):
     def act(self, observation, action_space):
         # xd = self.feature_engineer.get_features(observation)
         # print(xd[0, :, :, 9])
-        # print(observation["bomb_life"])
+        print(observation["step_count"])
         # print(xd[0, :, :, 0])
         # print(".........")
         # print(xd[0, :, :, 11])

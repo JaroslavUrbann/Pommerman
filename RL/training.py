@@ -22,6 +22,13 @@ class Training:
         # track number of updates for each model and each agent (to make an average afterwards)
         self.n_grad_updates = [[0] * 4 for _ in range(3)]
 
+        # grads that will be used to update the network
+        self.final_model_grads = [self.models[0].trainable_variables,
+                                    self.models[1].trainable_variables,
+                                    self.models[2].trainable_variables]
+
+        self.final_chat_grads = self.chat_model.trainable_variables
+
         # this timestep + 32 previous timesteps
         n_msgs = int((1 + CHAT_HISTORY_LENGTH / 2))
         self.tapes = [[None] * n_msgs for _ in range(4)]
@@ -44,8 +51,16 @@ class Training:
                 self.chats_grads[a][l] = self.chats_grads[a][l] * 0
 
 
+    def reset_final_grads(self):
+        for m in range(len(self.final_model_grads)):
+            for l in range(len(self.final_model_grads[m])):
+                self.final_model_grads[m][l] = self.final_model_grads[m][l] * 0
+        for l in range(len(self.final_chat_grads)):
+            self.final_chat_grads[l] = self.final_chat_grads[l] * 0
+
+
     # died_first should ideally have at most 1 player from each team
-    def apply_grads(self, won, died_first):
+    def save_grads(self, n_episodes, won, died_first):
         # 0.5 if it won but died, -0.5 if lost but didn't die first, else -1/1
         rewards = [(0.5 if a in died_first else 1) if a in won else -1 if a in died_first else -0.5 for a in range(4)]
 
@@ -53,28 +68,34 @@ class Training:
         rewards = [r if won else r / 2 for r in rewards]
 
         for m in range(len(self.models_grads)):
-            model_grads = []
             for l in range(len(self.models_grads[m][0])):
                 layer_grads = np.zeros_like(self.models_grads[m][0][l])
                 for a in range(len(self.models_grads[m])):
                     if self.n_grad_updates[m][a] > 0:
                         layer_grads += self.models_grads[m][a][l] * rewards[a] * 0.25 / self.n_grad_updates[m][a]
-                model_grads.append(layer_grads)
-            self.optimizers[m].apply_gradients(zip(model_grads, self.models[m].trainable_variables))
+                self.final_model_grads[m][l] = (self.final_model_grads[m][l] * (n_episodes - 1) + layer_grads) / n_episodes
 
-        chat_model_grads = []
         n_grad_updates = np.sum(self.n_grad_updates, axis=0)
         for l in range(len(self.chats_grads[0])):
             layer_grads = np.zeros_like(self.chats_grads[0][l])
             for a in range(len(self.chats_grads)):
                 layer_grads += self.chats_grads[a][l] * rewards[a] * 0.25 / n_grad_updates[a]
-            chat_model_grads.append(layer_grads)
-        self.optimizers[3].apply_gradients(zip(chat_model_grads, self.chat_model.trainable_variables))
+            self.final_chat_grads[l] = (self.final_chat_grads[l] * (n_episodes - 1) + layer_grads) / n_episodes
 
 
-    def end_episode(self, won, died_first):
-        self.apply_grads(won, died_first)
+    def apply_grads(self):
+        for m in range(len(self.models_grads)):
+            self.optimizers[m].apply_gradients(zip(self.final_model_grads[m], self.models[m].trainable_variables))
+        self.optimizers[3].apply_gradients(zip(self.final_chat_grads, self.chat_model.trainable_variables))
+
+
+    def end_episode(self, n_episodes, won, died_first):
+        self.save_grads(n_episodes, won, died_first)
         self.reset_grads()
+
+        if n_episodes % RL_UPDATE_FREQUENCY == 0:
+            self.apply_grads()
+            self.reset_final_grads()
 
         # this timestep + 32 previous timesteps
         n_msgs = int((1 + CHAT_HISTORY_LENGTH / 2))
@@ -112,7 +133,7 @@ class Training:
 
 
     # adds gradients from pervious timesteps to gradients from this timestep
-    def save_grads(self, agent_grads, chat_grads, m_i, a_id, weight):
+    def add_grads(self, agent_grads, chat_grads, m_i, a_id, weight):
 
         self.n_grad_updates[m_i][a_id] += weight
 
@@ -154,7 +175,7 @@ class Training:
             m_g, c_m_g = self.tapes[msg_agent_id][msg_index].gradient(msg, [self.models[m_i].trainable_variables,
                                                                             self.chat_model.trainable_variables])
 
-            self.save_grads(m_g, c_m_g, m_i, msg_agent_id, weight=0.5/N_BP_MESSAGES)
+            self.add_grads(m_g, c_m_g, m_i, msg_agent_id, weight=0.5/N_BP_MESSAGES)
             # for i in range(len(m_g)):
             #     if m_g[i] is not None:
             #         al += np.sum(np.absolute(m_g[i]))
@@ -215,7 +236,7 @@ class Training:
         self.backprop_chat(chat_grads, a_id)
         f = time.time() - tim
         tim = time.time()
-        self.save_grads(model_grads, chat_model_grads, m_i, a_id, weight=0.5)
+        self.add_grads(model_grads, chat_model_grads, m_i, a_id, weight=0.5)
 
         self.tapes[a_id][0] = new_tape
         g = time.time() - tim
