@@ -12,7 +12,7 @@ class Network:
 
     def __init__(self, drive, name=None, model_id=None, log_id=None):
         self.name = name
-        self.model_id = model_id
+        self.model_id = model_id[33:]
         self.log_id = log_id
         self.weights = None
         self.logs = None

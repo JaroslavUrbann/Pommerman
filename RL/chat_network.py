@@ -8,7 +8,7 @@ class ChatNetwork:
 
     def __init__(self, drive, name=None, model_id=None):
         self.name = name
-        self.model_id = model_id
+        self.model_id = model_id[33:]
         self.weights = None
         self.model = None
         self.drive = drive
